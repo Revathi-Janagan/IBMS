@@ -1,6 +1,9 @@
 const connection = require("../Helper/db");
 const { sendRegisterEmail } = require("../Helper/nodemailer");
 const bcrypt = require("bcrypt");
+const {RESET_ACCESS_TOKEN,ACCESS_TOKEN} = require("../Config/config")
+const jwt = require("jsonwebtoken");
+
 const saltRounds = 10;
 
 module.exports = {
@@ -27,7 +30,8 @@ module.exports = {
       const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
       // If there is no super admin, proceed with the registration
-      const insertSQL = "INSERT INTO super_admin (name, email, password, phone_number, profile_pic) VALUES (?, ?, ?, ?, ?)";
+      const insertSQL =
+        "INSERT INTO super_admin (name, email, password, phone_number, profile_pic) VALUES (?, ?, ?, ?, ?)";
       const values = [name, email, hashedPassword, phone_number, profile_pic];
       connection.query(insertSQL, values, (err, result) => {
         if (err) {
@@ -49,7 +53,9 @@ module.exports = {
     const { email } = req.body; // Assuming  pass the email as a route parameter
 
     if (!email) {
-      return res.status(400).send({ message: "Email is required to delete a super admin" });
+      return res
+        .status(400)
+        .send({ message: "Email is required to delete a super admin" });
     }
 
     // Check if the super admin exists
@@ -103,16 +109,45 @@ module.exports = {
         } else if (!result) {
           return res.status(400).send({ message: "Password Not Match" });
         }
-       
-      
+        const token = jwt.sign({ userId: user.id }, ACCESS_TOKEN, {
+          expiresIn: "12h",
+        });
+
         res.status(200).json({
           message: "Login Success",
           user: user,
-          
+          AccessToken: token,
         });
-        // res .status(200).send ({message:"Login Successfull", user:userId});
       });
     });
   },
-  };
+  passwordReset: (req, res) => {
+    const { newPassword } = req.body;
+    if (!newPassword) {
+      return res.status(400).send({ message: "New password is required" });
+    }
 
+    const email = req.resetTokenData.email;
+    const hashedPassword = bcrypt.hashSync(newPassword, saltRounds);
+
+    // Update the user's password in the database
+    const updatePasswordSql =
+      "UPDATE super_admin SET password = ? WHERE email = ?";
+    connection.query(
+      updatePasswordSql,
+      [hashedPassword, email],
+      (err, result) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send({ message: "Internal Error" });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(500).send({ message: "No Rows Affected" });
+        }
+
+        res.status(200).send({ message: "Password reset successfully" });
+      }
+    );
+  },
+};
