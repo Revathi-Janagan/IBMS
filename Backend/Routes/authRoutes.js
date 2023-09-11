@@ -6,6 +6,8 @@ const router = express.Router();
 router.post("/registerSuperAdmin", authController.registerSuperAdmin);
 router.post("/loginSuperAdmin", authController.loginUser);
 router.delete("/deleteSuperAdmin", authController.deleteSuperAdmin);
-router.post("/resetpassword",verifyResetToken,authController.passwordReset);
+router.post("/requestPasswordReset", authController.requestPasswordReset);
+router.post("/resetPassword", verifyResetToken, authController.resetPassword);
+
 
 module.exports = router;

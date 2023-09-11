@@ -1,7 +1,7 @@
 const connection = require("../Helper/db");
-const { sendRegisterEmail } = require("../Helper/nodemailer");
+const { sendRegisterEmail,sendPasswordResetEmail } = require("../Helper/nodemailer");
 const bcrypt = require("bcrypt");
-const {RESET_ACCESS_TOKEN,ACCESS_TOKEN} = require("../Config/config")
+const { RESET_ACCESS_TOKEN, ACCESS_TOKEN } = require("../Config/config");
 const jwt = require("jsonwebtoken");
 
 const saltRounds = 10;
@@ -121,18 +121,46 @@ module.exports = {
       });
     });
   },
-  passwordReset: (req, res) => {
+  requestPasswordReset: (req, res) => {
+    const { email } = req.body;
+
+    // Check if the user with the provided email exists in your database
+    const checkUserSql = "SELECT * FROM super_admin WHERE email = ?";
+    connection.query(checkUserSql, [email], (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({ message: "Internal Error" });
+      }
+
+      // If no user with the provided email exists, return an error
+      if (result.length === 0) {
+        return res.status(404).send({ message: "User not found" });
+      }
+
+      // Generate a reset token with a short expiration time (e.g., 15 minutes)
+      const resetToken = jwt.sign({ email: email }, RESET_ACCESS_TOKEN, {
+        expiresIn: "15m",
+      });
+
+      sendPasswordResetEmail(email, resetToken);
+      // Return a success message to the user
+      res
+        .status(200)
+        .send({ message: "Password reset email sent successfully" ,Resettoken:resetToken});
+    });
+  },
+  resetPassword: (req, res) => {
     const { newPassword } = req.body;
+    const { email } = req.resetTokenData;
+
     if (!newPassword) {
       return res.status(400).send({ message: "New password is required" });
     }
 
-    const email = req.resetTokenData.email;
     const hashedPassword = bcrypt.hashSync(newPassword, saltRounds);
 
     // Update the user's password in the database
-    const updatePasswordSql =
-      "UPDATE super_admin SET password = ? WHERE email = ?";
+    const updatePasswordSql = "UPDATE super_admin SET password = ? WHERE email = ?";
     connection.query(
       updatePasswordSql,
       [hashedPassword, email],
