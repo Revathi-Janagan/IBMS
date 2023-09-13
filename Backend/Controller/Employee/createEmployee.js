@@ -19,14 +19,15 @@ module.exports = (req, res) => {
     skills,
     experience_description,
     portfolio_url,
-    github_url,
+    github_url,    
+    password,
   } = req.body;
 
   // Begin a transaction
   connection.beginTransaction((err) => {
     if (err) {
       console.error(err);
-      return res.status(500).send({ message: "Internal Error" });
+      return res.status(500).send({ message: "Internal Error" ,error:err});
     }
 
     // Insert into the employees table
@@ -48,12 +49,33 @@ module.exports = (req, res) => {
       if (err) {
         console.error(err);
         connection.rollback(() => {
-          res.status(500).send({ message: "Internal Error" });
+          res.status(500).send({ message: "Internal Error",error:err });
         });
         return;
       }
 
       const employeeId = result.insertId;
+
+      if (isAdmin) {
+        // Insert into the admin table with email, username, and password
+        const insertAdminSQL = `
+          INSERT INTO admin (employee_id, email, password)
+          VALUES (?, ?, ?, ?)
+        `;
+
+        const adminValues = [employeeId, email,  password];
+
+        connection.query(insertAdminSQL, adminValues, (err) => {
+          if (err) {
+            console.error(err);
+            connection.rollback(() => {
+              res.status(500).send({ message: "Internal Error", error: err });
+            });
+            return;
+          }
+        });
+      }
+
 
       // Insert into the personal_information table
       const insertPersonalInfoSQL = `

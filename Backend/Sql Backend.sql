@@ -74,3 +74,84 @@ SET GLOBAL sql_mode = '';
 SET SESSION sql_mode = '';
 
 
+CREATE TABLE admin (
+  admin_id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT UNIQUE NOT NULL, -- Foreign key to employees table
+  email VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Add a foreign key constraint to link admin records to employees
+ALTER TABLE admin
+ADD FOREIGN KEY (employee_id)
+REFERENCES employees (employee_id)
+ON DELETE CASCADE; -- Optionally, cascade delete if an employee is deleted
+
+
+
+ALTER TABLE personal_information
+ADD CONSTRAINT fk_employee_personal
+FOREIGN KEY (employee_id)
+REFERENCES employees(employee_id)
+ON DELETE CASCADE;
+
+
+ALTER TABLE contact_details
+DROP FOREIGN KEY contact_details_ibfk_1; -- Remove the existing foreign key constraint
+
+ALTER TABLE contact_details
+ADD CONSTRAINT fk_employee_contact
+FOREIGN KEY (employee_id)
+REFERENCES employees(employee_id)
+ON DELETE CASCADE;
+ALTER TABLE extra_information
+DROP FOREIGN KEY extra_information_ibfk_1; -- Remove the existing foreign key constraint
+
+ALTER TABLE extra_information
+ADD CONSTRAINT fk_employee_extra
+FOREIGN KEY (employee_id)
+REFERENCES employees(employee_id)
+ON DELETE CASCADE;
+
+ALTER TABLE employee_skills
+DROP FOREIGN KEY employee_skills_ibfk_1; -- Remove the existing foreign key constraint
+
+ALTER TABLE employee_skills
+ADD CONSTRAINT fk_employee_skills
+FOREIGN KEY (employee_id)
+REFERENCES employees(employee_id)
+ON DELETE CASCADE;
+
+ALTER TABLE experience
+DROP FOREIGN KEY experience_ibfk_1; -- Remove the existing foreign key constraint
+
+ALTER TABLE experience
+ADD CONSTRAINT fk_employee_experience
+FOREIGN KEY (employee_id)
+REFERENCES employees(employee_id)
+ON DELETE CASCADE;
+
+
+ALTER TABLE projects
+DROP FOREIGN KEY projects_ibfk_1; -- Remove the existing foreign key constraint
+
+ALTER TABLE projects
+ADD CONSTRAINT fk_employee_projects
+FOREIGN KEY (employee_id)
+REFERENCES employees(employee_id)
+ON DELETE CASCADE;
+
+ALTER TABLE contact_details
+  ADD FOREIGN KEY (employee_id)
+  REFERENCES employees (employee_id)
+  ON DELETE CASCADE;
+
+ALTER TABLE personal_information
+  ADD FOREIGN KEY (employee_id)
+  REFERENCES employees (employee_id)
+  ON DELETE CASCADE;
+
+
+

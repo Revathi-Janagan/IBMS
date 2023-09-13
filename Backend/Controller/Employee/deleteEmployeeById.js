@@ -12,7 +12,7 @@ module.exports = (req, res) => {
   connection.query(checkEmployeeExistsSQL, [employeeId], (err, results) => {
     if (err) {
       console.error(err);
-      return res.status(500).send({ message: "Internal Error" });
+      return res.status(500).send({ message: "Internal Error",error:err });
     }
 
     // Check if there are no results (employee not found)
@@ -24,7 +24,7 @@ module.exports = (req, res) => {
     connection.beginTransaction((err) => {
       if (err) {
         console.error(err);
-        return res.status(500).send({ message: "Internal Error" });
+        return res.status(500).send({ message: "Internal Error",error:err });
       }
 
       // Define SQL statements to delete from related tables
@@ -64,7 +64,7 @@ module.exports = (req, res) => {
         if (err) {
           console.error(err);
           connection.rollback(() => {
-            res.status(500).send({ message: "Internal Error" });
+            res.status(500).send({ message: "Internal Error",error:err });
           });
           return;
         }
@@ -73,7 +73,7 @@ module.exports = (req, res) => {
           if (err) {
             console.error(err);
             connection.rollback(() => {
-              res.status(500).send({ message: "Internal Error" });
+              res.status(500).send({ message: "Internal Error",error:err });
             });
             return;
           }
@@ -82,7 +82,7 @@ module.exports = (req, res) => {
             if (err) {
               console.error(err);
               connection.rollback(() => {
-                res.status(500).send({ message: "Internal Error" });
+                res.status(500).send({ message: "Internal Error",error:err });
               });
               return;
             }
@@ -91,7 +91,7 @@ module.exports = (req, res) => {
               if (err) {
                 console.error(err);
                 connection.rollback(() => {
-                  res.status(500).send({ message: "Internal Error" });
+                  res.status(500).send({ message: "Internal Error",error:err });
                 });
                 return;
               }
@@ -100,7 +100,7 @@ module.exports = (req, res) => {
                 if (err) {
                   console.error(err);
                   connection.rollback(() => {
-                    res.status(500).send({ message: "Internal Error" });
+                    res.status(500).send({ message: "Internal Error" ,error:err});
                   });
                   return;
                 }
@@ -110,7 +110,7 @@ module.exports = (req, res) => {
                   if (err) {
                     console.error(err);
                     connection.rollback(() => {
-                      res.status(500).send({ message: "Internal Error" });
+                      res.status(500).send({ message: "Internal Error",error:err });
                     });
                     return;
                   }
@@ -119,7 +119,7 @@ module.exports = (req, res) => {
                   connection.commit((err) => {
                     if (err) {
                       console.error(err);
-                      res.status(500).send({ message: "Internal Error" });
+                      res.status(500).send({ message: "Internal Error",error:err });
                       return;
                     }
 
