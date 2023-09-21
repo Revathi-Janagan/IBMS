@@ -27,25 +27,36 @@ const generateToken = (user) => {
 };
 
 const verifyUserRole = (req, res, next) => {
+  console.log("Inside verifyUserRole middleware");
   const token =
     req.headers.authorization && req.headers.authorization.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });
   }
+  console.log("Token is",token)
 
   jwt.verify(token, ACCESS_TOKEN, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ error: "Forbidden: Invalid token", error:err });
+      return res
+        .status(403)
+        .json({ error: "Forbidden: Invalid token", error: err });
     }
-
-    if (decoded.isSuperadmin || decoded.isAdmin) {
-      // User is either an admin or super admin
-      
+    req.user = decoded;
+    console.log("Decoded Token:", decoded);
+    if (decoded.isSuperadmin) {
+      // User is a superadmin, allow all actions
+      console.log(decoded.isSuperadmin)
       next();
-    } else {
-      return res.status(403).json({ error: "Forbidden: Not Authorized" });
+    } else if (decoded.isAdmin) {
+      // User is an admin, but only allow creating non-admin employees
+      if (!req.body.isAdmin) {
+        next();
+      } else {
+        return res.status(403).json({ error: "Forbidden: Not Authorized" });
+      }
     }
+    
   });
 };
 
@@ -80,7 +91,7 @@ const determineUserRole = (req, res, next) => {
       return res.status(400).send({ message: "Internal Error" });
     }
     const superAdmin = superAdminResult[0];
-    console.log("SUPER admin Email is",superAdmin );
+    console.log("SUPER admin Email is", superAdmin);
 
     if (superAdmin) {
       // The user is a superadmin
@@ -89,13 +100,11 @@ const determineUserRole = (req, res, next) => {
         isSuperadmin: true,
         id: superAdmin.super_admin_id,
       };
-      console.log("user is",req.user);
+      console.log("user is", req.user);
       next();
     } else {
-      
-
       const adminSql = "SELECT * FROM admin WHERE email = ?";
-      console.log("Email for login: ", email);
+
       connection.query(adminSql, [email], (err, adminResult) => {
         if (err) {
           return res
@@ -112,9 +121,8 @@ const determineUserRole = (req, res, next) => {
             isSuperadmin: false,
             id: admin.admin_id,
           };
-          
-        } 
-        next();
+          next();
+        }
       });
     }
   });

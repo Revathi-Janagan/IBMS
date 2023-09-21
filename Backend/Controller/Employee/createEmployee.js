@@ -1,4 +1,6 @@
 const connection = require("../../Helper/db");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 module.exports = (req, res) => {
   const {
@@ -23,11 +25,11 @@ module.exports = (req, res) => {
     password,
     fieldsToAdd,
   } = req.body;
-
+console.log(req.body)
   if (!Array.isArray(fieldsToAdd)) {
     return res.status(400).send({ message: "Invalid fieldsToAdd parameter" });
   }
-
+  console.log("Before database query");
   // Begin a transaction
   connection.beginTransaction((err) => {
     if (err) {
@@ -58,23 +60,39 @@ module.exports = (req, res) => {
 
         const employeeId = result.insertId;
 
-        if (isAdmin) {
-          // Insert into the admin table with email, username, and password
-          const adminValues = {
-            employee_id: employeeId,
-            email,
-            password,
-          };
+        // ...
 
-          connection.query("INSERT INTO admin SET ?", adminValues, (err) => {
+        if (isAdmin) {
+          // Hash the password
+          bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
             if (err) {
               console.error(err);
               return connection.rollback(() => {
                 res.status(500).send({ message: "Internal Error", error: err });
               });
             }
+
+            // Insert into the admin table with the hashed password
+            const adminValues = {
+              employee_id: employeeId,
+              email,
+              password: hashedPassword, // Use the hashed password
+            };
+
+            connection.query("INSERT INTO admin SET ?", adminValues, (err) => {
+              if (err) {
+                console.error(err);
+                return connection.rollback(() => {
+                  res
+                    .status(500)
+                    .send({ message: "Internal Error", error: err });
+                });
+              }
+            });
           });
         }
+
+       
 
         const personalInfoValues = {
           employee_id: employeeId,
@@ -325,13 +343,36 @@ module.exports = (req, res) => {
                                     .send({ message: "Internal Error" });
                                 } else {
                                   // Transaction was successful, send a response to the client
-                                  res.status(200).send({
-                                    message: `Employee ${name} created successfully`,
-                                    employee_id: employeeId,
-                                    
-                                  });
-                                }
-                              });
+                                  // res.status(200).send({
+                                  //   message: `Employee ${name} created successfully`,
+                                  //   employee_id: employeeId,
+                                  // });
+                                  console.log("EmployeeId before selecting profile:", employeeId);
+                                  connection.query(
+                                    "SELECT * FROM employees WHERE employee_id = ?",
+                                    [employeeId],
+                                    (err, employeeResult) => {
+                                      if (err) {
+                                        console.error(err);
+                                        res.status(500).send({ message: "Internal Error" });
+                                      } else if (employeeResult.length > 0) {
+                                        // Employee profile retrieved successfully, log it to the console
+                                        const employeeProfile = employeeResult[0];
+                                        console.log("Employee Profile:", employeeProfile);
+                              
+                                        // Send a response to the client
+                                        res.status(200).send({
+                                          message: `Employee ${name} created successfully`,
+                                          employee_id: employeeId,
+                                        });
+                                        console.log("Before sending response");
+                                        console.log("Employee Profile Created successfully");
+                                      } else {
+                                        // Employee not found
+                                        res.status(404).send({ message: "Employee not found" });
+                                      }
+                                  }
+                           )} });
                             }
                           );
                         }

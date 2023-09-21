@@ -62,5 +62,6 @@ module.exports = (req, res) => {
       return res.status(404).send({ message: "Employee not found" });
     }
     res.status(200).json(results[0]);
+    console.log("Get Employee By Employee ID Done Successfully!!!")
   });
 };

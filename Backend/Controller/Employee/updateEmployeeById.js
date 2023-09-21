@@ -56,7 +56,7 @@ module.exports = (req, res) => {
       // Update the employees table
       const updateEmployeeSQL = `
         UPDATE employees
-        SET name=?, profile_pic=?, experience=?, designation=?, education=?, isAdmin=?
+        SET name=?, profile_pic=?, experience=?, designation=?, isAdmin=?
         WHERE employee_id=?
       `;
 
@@ -64,8 +64,7 @@ module.exports = (req, res) => {
         name,
         profile_pic,
         experience,
-        designation,
-        education,
+        designation,        
         isAdmin,
         employeeId,
       ];

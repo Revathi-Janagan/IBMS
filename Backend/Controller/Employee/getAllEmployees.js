@@ -49,5 +49,6 @@ module.exports = (req, res) => {
       return res.status(500).send({ message: "Internal Error" });
     }
     res.status(200).json(results);
+    console.log("Listed Succesfully")
   });
 };

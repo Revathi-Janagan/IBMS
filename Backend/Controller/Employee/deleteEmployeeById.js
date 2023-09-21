@@ -126,7 +126,9 @@ module.exports = (req, res) => {
                     // Transaction was successful, send a response to the client
                     res.status(200).send({
                       message: `Employee with ID ${employeeId} deleted successfully`,
+                      
                     });
+                    console.log( `Employee with ID ${employeeId} deleted successfully`)
                   });
                 });
               });
