@@ -19,254 +19,331 @@ module.exports = (req, res) => {
     skills,
     experience_description,
     portfolio_url,
-    github_url,    
+    github_url,
     password,
+    fieldsToAdd,
   } = req.body;
+
+  if (!Array.isArray(fieldsToAdd)) {
+    return res.status(400).send({ message: "Invalid fieldsToAdd parameter" });
+  }
 
   // Begin a transaction
   connection.beginTransaction((err) => {
     if (err) {
       console.error(err);
-      return res.status(500).send({ message: "Internal Error" ,error:err});
+      return res.status(500).send({ message: "Internal Error", error: err });
     }
 
-    // Insert into the employees table
-    const insertEmployeeSQL = `
-      INSERT INTO employees (name, profile_pic, experience, designation, education, isAdmin)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-
-    const employeeValues = [
+    const employeeValues = {
       name,
       profile_pic,
       experience,
       designation,
       education,
       isAdmin,
-    ];
+    };
 
-    connection.query(insertEmployeeSQL, employeeValues, (err, result) => {
-      if (err) {
-        console.error(err);
-        connection.rollback(() => {
-          res.status(500).send({ message: "Internal Error",error:err });
-        });
-        return;
-      }
-
-      const employeeId = result.insertId;
-
-      if (isAdmin) {
-        // Insert into the admin table with email, username, and password
-        const insertAdminSQL = `
-          INSERT INTO admin (employee_id, email, password)
-          VALUES (?, ?, ?, ?)
-        `;
-
-        const adminValues = [employeeId, email,  password];
-
-        connection.query(insertAdminSQL, adminValues, (err) => {
-          if (err) {
-            console.error(err);
-            connection.rollback(() => {
-              res.status(500).send({ message: "Internal Error", error: err });
-            });
-            return;
-          }
-        });
-      }
-
-
-      // Insert into the personal_information table
-      const insertPersonalInfoSQL = `
-        INSERT INTO personal_information (employee_id, dob, marital_status, gender, place)
-        VALUES (?, ?, ?, ?, ?)
-      `;
-
-      const personalInfoValues = [
-        employeeId,
-        dob,
-        marital_status,
-        gender,
-        place,
-      ];
-
-      connection.query(insertPersonalInfoSQL, personalInfoValues, (err) => {
+    // Insert into the employees table
+    connection.query(
+      "INSERT INTO employees SET ?",
+      employeeValues,
+      (err, result) => {
         if (err) {
           console.error(err);
-          connection.rollback(() => {
-            res.status(500).send({ message: "Internal Error" });
+          return connection.rollback(() => {
+            res.status(500).send({ message: "Internal Error", error: err });
           });
-          return;
         }
 
-        // Insert into the contact_details table
-        const insertContactDetailsSQL = `
-          INSERT INTO contact_details (employee_id, mobile_number, email)
-          VALUES (?, ?, ?)
-        `;
+        const employeeId = result.insertId;
 
-        const contactDetailsValues = [employeeId, mobile_number, email];
+        if (isAdmin) {
+          // Insert into the admin table with email, username, and password
+          const adminValues = {
+            employee_id: employeeId,
+            email,
+            password,
+          };
 
+          connection.query("INSERT INTO admin SET ?", adminValues, (err) => {
+            if (err) {
+              console.error(err);
+              return connection.rollback(() => {
+                res.status(500).send({ message: "Internal Error", error: err });
+              });
+            }
+          });
+        }
+
+        const personalInfoValues = {
+          employee_id: employeeId,
+          dob,
+          marital_status,
+          gender,
+          place,
+        };
+
+        // Insert into the personal_information table
         connection.query(
-          insertContactDetailsSQL,
-          contactDetailsValues,
+          "INSERT INTO personal_information SET ?",
+          personalInfoValues,
           (err) => {
             if (err) {
               console.error(err);
-              connection.rollback(() => {
+              return connection.rollback(() => {
                 res.status(500).send({ message: "Internal Error" });
               });
-              return;
             }
 
-            // Insert into the extra_information table
-            const insertExtraInfoSQL = `
-              INSERT INTO extra_information (employee_id, alternative_phone_number, physically_challenged)
-              VALUES (?, ?, ?)
-            `;
+            const contactDetailsValues = {
+              employee_id: employeeId,
+              mobile_number,
+              email,
+            };
 
-            const extraInfoValues = [
-              employeeId,
-              alternative_phone_number,
-              physically_challenged,
-            ];
-
-            connection.query(insertExtraInfoSQL, extraInfoValues, (err) => {
-              if (err) {
-                console.error(err);
-                connection.rollback(() => {
-                  res.status(500).send({ message: "Internal Error" });
-                });
-                return;
-              }
-
-              // Iterate through skills and insert each one
-              if (Array.isArray(skills) && skills.length > 0) {
-                const insertSkillsSQL = `
-                  INSERT INTO employee_skills (employee_id, skill_id)
-                  VALUES (?, ?)
-                `;
-
-                skills.forEach((skillName) => {
-                  // Check if the skill already exists
-                  const checkSkillSQL = `
-                    SELECT skill_id FROM skills WHERE skill_name = ?
-                  `;
-
-                  connection.query(checkSkillSQL, [skillName], (err, skillResult) => {
-                    if (err) {
-                      console.error(err);
-                      connection.rollback(() => {
-                        res.status(500).send({ message: "Internal Error" });
-                      });
-                      return;
-                    }
-
-                    if (skillResult.length > 0) {
-                      // Skill exists, use its skill_id
-                      const skillId = skillResult[0].skill_id;
-                      const skillValues = [employeeId, skillId];
-
-                      // Insert into the employee_skills table
-                      connection.query(insertSkillsSQL, skillValues, (err) => {
-                        if (err) {
-                          console.error(err);
-                          connection.rollback(() => {
-                            res.status(500).send({ message: "Internal Error" });
-                          });
-                          return;
-                        }
-                      });
-                    } else {
-                      // Skill doesn't exist, insert it into the skills table
-                      const insertNewSkillSQL = `
-                        INSERT INTO skills (skill_name)
-                        VALUES (?)
-                      `;
-
-                      connection.query(insertNewSkillSQL, [skillName], (err, newSkillResult) => {
-                        if (err) {
-                          console.error(err);
-                          connection.rollback(() => {
-                            res.status(500).send({ message: "Internal Error" });
-                          });
-                          return;
-                        }
-
-                        const skillId = newSkillResult.insertId;
-                        const skillValues = [employeeId, skillId];
-
-                        // Insert into the employee_skills table
-                        connection.query(insertSkillsSQL, skillValues, (err) => {
-                          if (err) {
-                            console.error(err);
-                            connection.rollback(() => {
-                              res.status(500).send({ message: "Internal Error" });
-                            });
-                            return;
-                          }
-                        });
-                      });
-                    }
-                  });
-                });
-              }
-
-              // Insert into the experience table
-              const insertExperienceSQL = `
-                INSERT INTO experience (employee_id, experience_description)
-                VALUES (?, ?)
-              `;
-
-              const experienceValues = [employeeId, experience_description];
-
-              connection.query(insertExperienceSQL, experienceValues, (err) => {
+            // Insert into the contact_details table
+            connection.query(
+              "INSERT INTO contact_details SET ?",
+              contactDetailsValues,
+              (err) => {
                 if (err) {
                   console.error(err);
-                  connection.rollback(() => {
+                  return connection.rollback(() => {
                     res.status(500).send({ message: "Internal Error" });
                   });
-                  return;
                 }
 
-                // Insert into the projects table
-                const insertProjectsSQL = `
-                  INSERT INTO projects (employee_id, portfolio_url, github_url)
-                  VALUES (?, ?, ?)
-                `;
+                const extraInfoValues = {
+                  employee_id: employeeId,
+                  alternative_phone_number,
+                  physically_challenged,
+                };
 
-                const projectsValues = [employeeId, portfolio_url, github_url];
-
-                connection.query(insertProjectsSQL, projectsValues, (err) => {
-                  if (err) {
-                    console.error(err);
-                    connection.rollback(() => {
-                      res.status(500).send({ message: "Internal Error" });
-                    });
-                    return;
-                  }
-
-                  // Commit the transaction
-                  connection.commit((err) => {
+                // Insert into the extra_information table
+                connection.query(
+                  "INSERT INTO extra_information SET ?",
+                  extraInfoValues,
+                  (err) => {
                     if (err) {
                       console.error(err);
-                      res.status(500).send({ message: "Internal Error" });
-                      return;
+                      return connection.rollback(() => {
+                        res.status(500).send({ message: "Internal Error" });
+                      });
                     }
 
-                    // Transaction was successful, send a response to the client
-                    res.status(200).send({
-                      message: `Employee ${name} created successfully`,
-                      employee_id: employeeId,
-                    });
-                  });
-                });
-              });
-            });
+                    // Insert skills into employee_skills table
+                    if (Array.isArray(skills) && skills.length > 0) {
+                      const skillInsertPromises = skills.map((skillName) => {
+                        return new Promise((resolve, reject) => {
+                          // Check if the skill already exists
+                          connection.query(
+                            "SELECT skill_id FROM skills WHERE skill_name = ?",
+                            [skillName],
+                            (err, skillResult) => {
+                              if (err) {
+                                console.error(err);
+                                reject(err);
+                              } else if (skillResult.length > 0) {
+                                // Skill exists, use its skill_id
+                                const skillId = skillResult[0].skill_id;
+                                const skillValues = {
+                                  employee_id: employeeId,
+                                  skill_id: skillId,
+                                };
+
+                                // Insert into the employee_skills table
+                                connection.query(
+                                  "INSERT INTO employee_skills SET ?",
+                                  skillValues,
+                                  (err) => {
+                                    if (err) {
+                                      console.error(err);
+                                      reject(err);
+                                    } else {
+                                      resolve();
+                                    }
+                                  }
+                                );
+                              } else {
+                                // Skill doesn't exist, insert it into the skills table
+                                const newSkillValues = {
+                                  skill_name: skillName,
+                                };
+
+                                // Insert into the skills table
+                                connection.query(
+                                  "INSERT INTO skills SET ?",
+                                  newSkillValues,
+                                  (err, newSkillResult) => {
+                                    if (err) {
+                                      console.error(err);
+                                      reject(err);
+                                    } else {
+                                      const skillId = newSkillResult.insertId;
+                                      const skillValues = {
+                                        employee_id: employeeId,
+                                        skill_id: skillId,
+                                      };
+
+                                      // Insert into the employee_skills table
+                                      connection.query(
+                                        "INSERT INTO employee_skills SET ?",
+                                        skillValues,
+                                        (err) => {
+                                          if (err) {
+                                            console.error(err);
+                                            reject(err);
+                                          } else {
+                                            resolve();
+                                          }
+                                        }
+                                      );
+                                    }
+                                  }
+                                );
+                              }
+                            }
+                          );
+                        });
+                      });
+
+                      Promise.all(skillInsertPromises)
+                        .then(() => {
+                          // Insert into the experience table
+                          const experienceValues = {
+                            employee_id: employeeId,
+                            experience_description,
+                          };
+
+                          connection.query(
+                            "INSERT INTO experience SET ?",
+                            experienceValues,
+                            (err) => {
+                              if (err) {
+                                console.error(err);
+                                return connection.rollback(() => {
+                                  res.status(500).send({
+                                    message: "Internal Error",
+                                  });
+                                });
+                              }
+
+                              // Insert into the projects table
+                              const projectsValues = {
+                                employee_id: employeeId,
+                                portfolio_url,
+                                github_url,
+                              };
+
+                              connection.query(
+                                "INSERT INTO projects SET ?",
+                                projectsValues,
+                                (err) => {
+                                  if (err) {
+                                    console.error(err);
+                                    return connection.rollback(() => {
+                                      res.status(500).send({
+                                        message: "Internal Error",
+                                      });
+                                    });
+                                  }
+
+                                  // Commit the transaction
+                                  connection.commit((err) => {
+                                    if (err) {
+                                      console.error(err);
+                                      res
+                                        .status(500)
+                                        .send({ message: "Internal Error" });
+                                    } else {
+                                      // Transaction was successful, send a response to the client
+                                      res.status(200).send({
+                                        message: `Employee ${name} created successfully`,
+                                        employee_id: employeeId,
+                                      });
+                                    }
+                                  });
+                                }
+                              );
+                            }
+                          );
+                        })
+                        .catch((err) => {
+                          console.error(err);
+                          return connection.rollback(() => {
+                            res.status(500).send({ message: "Internal Error" });
+                          });
+                        });
+                    } else {
+                      // No skills to insert, proceed to the next step
+                      // Insert into the experience table
+                      const experienceValues = {
+                        employee_id: employeeId,
+                        experience_description,
+                      };
+
+                      connection.query(
+                        "INSERT INTO experience SET ?",
+                        experienceValues,
+                        (err) => {
+                          if (err) {
+                            console.error(err);
+                            return connection.rollback(() => {
+                              res
+                                .status(500)
+                                .send({ message: "Internal Error" });
+                            });
+                          }
+
+                          // Insert into the projects table
+                          const projectsValues = {
+                            employee_id: employeeId,
+                            portfolio_url,
+                            github_url,
+                          };
+
+                          connection.query(
+                            "INSERT INTO projects SET ?",
+                            projectsValues,
+                            (err) => {
+                              if (err) {
+                                console.error(err);
+                                return connection.rollback(() => {
+                                  res
+                                    .status(500)
+                                    .send({ message: "Internal Error" });
+                                });
+                              }
+
+                              // Commit the transaction
+                              connection.commit((err) => {
+                                if (err) {
+                                  console.error(err);
+                                  res
+                                    .status(500)
+                                    .send({ message: "Internal Error" });
+                                } else {
+                                  // Transaction was successful, send a response to the client
+                                  res.status(200).send({
+                                    message: `Employee ${name} created successfully`,
+                                    employee_id: employeeId,
+                                    
+                                  });
+                                }
+                              });
+                            }
+                          );
+                        }
+                      );
+                    }
+                  }
+                );
+              }
+            );
           }
         );
-      });
-    });
+      }
+    );
   });
 };

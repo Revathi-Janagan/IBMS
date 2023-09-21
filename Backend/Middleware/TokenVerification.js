@@ -2,48 +2,61 @@ const jwt = require("jsonwebtoken");
 const { ACCESS_TOKEN, RESET_ACCESS_TOKEN } = require("../Config/config");
 const connection = require("../Helper/db");
 
-// Middleware for verifying tokens
-module.exports.verifySuperAdmin  = (req, res, next) => {
-  const token =
-    req.headers.authorization && req.headers.authorization.split(" ")[1];
+// Function to generate a JWT token with the user's role
+const generateToken = (user) => {
+  const tokenPayload = {
+    id: user.id,
+    username: user.username,
+  };
+
+  if (user.superadminId) {
+    tokenPayload.isSuperadmin = true; // Superadmin has full access
+  } else if (user.isAdmin) {
+    tokenPayload.isAdmin = true; // Admin has restricted access
+  } else if (user.employeeId) {
+    tokenPayload.isEmployee = true; // Employee-specific actions can be handled
+  }
+
   const options = {
     expiresIn: "12h",
   };
+  console.log("Token payload is", tokenPayload);
+  const token = jwt.sign(tokenPayload, ACCESS_TOKEN, options);
+
+  return token;
+};
+
+const verifyUserRole = (req, res, next) => {
+  const token =
+    req.headers.authorization && req.headers.authorization.split(" ")[1];
 
   if (!token) {
-    return res.status(400).json({ error: "Unauthorized: Token not provided" });
+    return res.status(401).json({ error: "Unauthorized: No token provided" });
   }
 
-  jwt.verify(token, ACCESS_TOKEN, options, (err, decoded) => {
+  jwt.verify(token, ACCESS_TOKEN, (err, decoded) => {
     if (err) {
-      return res.status(400).json({ error: "Invalid Token" });
+      return res.status(403).json({ error: "Forbidden: Invalid token", error:err });
     }
-    const userRole = decoded.role;
 
-    // Check the user's role and apply different access controls
-    if (userRole === "superadmin") {
-      // User is a superadmin, allow specific access
-      req.user = decoded;
-      next();
-    } else if (userRole === "admin") {
-      // User is an admin, allow different access
-      req.user = decoded;
+    if (decoded.isSuperadmin || decoded.isAdmin) {
+      // User is either an admin or super admin
+      
       next();
     } else {
-      // User is not authorized, deny access
-      return res.status(403).json({ error: "Permission denied" });
+      return res.status(403).json({ error: "Forbidden: Not Authorized" });
     }
   });
 };
 
-module.exports.verifyResetToken = (req, res, next) => {
-  const { token } = req.body; // Assuming the token is passed as a body
+// Middleware to verify the reset token
+const verifyResetToken = (req, res, next) => {
+  const { token } = req.body;
 
   if (!token) {
     return res.status(400).send({ message: "Reset token is required" });
   }
 
-  // Verify the reset token
   jwt.verify(token, RESET_ACCESS_TOKEN, (err, decoded) => {
     if (err) {
       return res
@@ -51,9 +64,65 @@ module.exports.verifyResetToken = (req, res, next) => {
         .send({ message: "Invalid or expired reset token", error: err });
     }
 
-    // Attach the decoded token data to the request object for later use
     req.resetTokenData = decoded;
 
     next();
   });
+};
+
+const determineUserRole = (req, res, next) => {
+  const { email } = req.body;
+
+  // Check if the user is a superadmin
+  const superAdminSql = "SELECT * FROM super_admin WHERE email = ?";
+  connection.query(superAdminSql, [email], (err, superAdminResult) => {
+    if (err) {
+      return res.status(400).send({ message: "Internal Error" });
+    }
+    const superAdmin = superAdminResult[0];
+    console.log("SUPER admin Email is",superAdmin );
+
+    if (superAdmin) {
+      // The user is a superadmin
+      req.user = {
+        isAdmin: false,
+        isSuperadmin: true,
+        id: superAdmin.super_admin_id,
+      };
+      console.log("user is",req.user);
+      next();
+    } else {
+      
+
+      const adminSql = "SELECT * FROM admin WHERE email = ?";
+      console.log("Email for login: ", email);
+      connection.query(adminSql, [email], (err, adminResult) => {
+        if (err) {
+          return res
+            .status(400)
+            .send({ message: "Internal Error", error: err });
+        }
+        const admin = adminResult[0];
+        console.log("admin is", admin);
+
+        if (admin) {
+          // The user is an admin
+          req.user = {
+            isAdmin: true,
+            isSuperadmin: false,
+            id: admin.admin_id,
+          };
+          
+        } 
+        next();
+      });
+    }
+  });
+};
+
+module.exports = {
+  generateToken,
+  verifyUserRole,
+  verifyResetToken,
+  determineUserRole,
 };

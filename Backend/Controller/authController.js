@@ -1,5 +1,8 @@
 const connection = require("../Helper/db");
-const { sendRegisterEmail,sendPasswordResetEmail } = require("../Helper/nodemailer");
+const {
+  sendRegisterEmail,
+  sendPasswordResetEmail,
+} = require("../Helper/nodemailer");
 const bcrypt = require("bcrypt");
 const { RESET_ACCESS_TOKEN, ACCESS_TOKEN } = require("../Config/config");
 const jwt = require("jsonwebtoken");
@@ -89,38 +92,106 @@ module.exports = {
     });
   },
   loginUser: (req, res) => {
-    // Implement login logic here
-    console.log("Inside Login User....");
     const { email, password } = req.body;
-    const sql = "SELECT * FROM super_admin WHERE email = ?";
-    connection.query(sql, [email], (err, result) => {
-      if (err) {
-        return res.status(400).send({ message: "Internal Error" });
-      }
-      const user = result[0];
-      if (!user) {
-        return res.status(400).send({ message: "User not Found" });
-      }
-      bcrypt.compare(password, user.password, async function (err, result) {
-        if (err) {
-          return res
-            .status(400)
-            .send({ message: "Error while creating hashing Password" });
-        } else if (!result) {
-          return res.status(400).send({ message: "Password Not Match" });
-        }
-        const token = jwt.sign({ userId: user.id }, ACCESS_TOKEN, {
-          expiresIn: "12h",
-        });
+    console.log("Content is",req.body);
 
-        res.status(200).json({
-          message: "Login Success",
-          user: user,
-          AccessToken: token,
+    // Check if the user is a super admin
+    const superAdminSql = "SELECT * FROM super_admin WHERE email = ?";
+    connection.query(superAdminSql, [email], (err, superAdminResult) => {
+      if (err) {
+        return res.status(400).send({ message: "Internal Error", error:err });
+      }
+      const superAdmin = superAdminResult[0];
+       console.log("Superadmin is",superAdmin);
+
+      if (superAdmin) {
+        // The user is a super admin
+        console.log(superAdmin.super_admin_id);
+
+        req.user = {
+          role: "superadmin", // Set the user's role
+          id: superAdmin.super_admin_id, // Include other relevant user information
+        };
+        console.log("User is a superadmin", req.user);
+
+        bcrypt.compare(password, superAdmin.password, (err, result) => {
+          if (err) {
+            return res
+              .status(400)
+              .send({ message: "Error while comparing passwords" });
+          }
+          if (result) {
+            const isSuperadmin = true; // Super admin has full access
+            const tokenPayload = {
+              userId: superAdmin.super_admin_id,
+              isSuperadmin,
+            };
+            console.log("Token Payload", tokenPayload);
+            const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
+              expiresIn: "12h",
+            });
+            return res.status(200).json({
+              message: "Login Success",
+              user: superAdmin,
+              AccessToken: token,
+            });
+          }
+          return res.status(400).send({ message: "Password Not Match" });
         });
-      });
+      } else {
+        // The user is not a super admin, check if they are an admin
+        const adminSql = "SELECT * FROM admin WHERE email = ?";
+        connection.query(adminSql, [email], (err, adminResult) => {
+          if (err) {
+            return res.status(400).send({ message: "Internal Error" });
+          }
+          const admin = adminResult[0];
+          console.log("admin Result is",admin)
+
+          if (!admin) {
+            return res
+              .status(400)
+              .send({ message: "User not Found", error: err });
+          }
+          req.user = {
+            role: "admin", // Set the user's role
+            id: admin.admin_id, // Include other relevant user information
+          };
+
+          // Check if the user is an admin
+          bcrypt.compare(password, admin.password, (err, result) => {
+            if (err) {
+              return res
+                .status(400)
+                .send({
+                  message: "Error while comparing passwords",
+                  error: err,
+                });
+            }
+            if (result) {
+              const isSuperadmin = false; // Admin is not a super admin
+              const tokenPayload = {
+                userId: admin.admin_id,
+                isSuperadmin,
+              };
+              const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
+                expiresIn: "12h",
+              });
+              return res.status(200).json({
+                message: "Login Success",
+                user: admin,
+                AccessToken: token,
+              });
+            }
+            return res
+              .status(400)
+              .send({ message: "Password Not Match", error: err });
+          });
+        });
+      }
     });
   },
+
   requestPasswordReset: (req, res) => {
     const { email } = req.body;
 
@@ -144,9 +215,10 @@ module.exports = {
 
       sendPasswordResetEmail(email, resetToken);
       // Return a success message to the user
-      res
-        .status(200)
-        .send({ message: "Password reset email sent successfully" ,Resettoken:resetToken});
+      res.status(200).send({
+        message: "Password reset email sent successfully",
+        Resettoken: resetToken,
+      });
     });
   },
   resetPassword: (req, res) => {
@@ -160,7 +232,8 @@ module.exports = {
     const hashedPassword = bcrypt.hashSync(newPassword, saltRounds);
 
     // Update the user's password in the database
-    const updatePasswordSql = "UPDATE super_admin SET password = ? WHERE email = ?";
+    const updatePasswordSql =
+      "UPDATE super_admin SET password = ? WHERE email = ?";
     connection.query(
       updatePasswordSql,
       [hashedPassword, email],
