@@ -27,14 +27,12 @@ const generateToken = (user) => {
 };
 
 const verifyUserRole = (req, res, next) => {
-  console.log("Inside verifyUserRole middleware");
   const token =
     req.headers.authorization && req.headers.authorization.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });
   }
-  console.log("Token is",token)
 
   jwt.verify(token, ACCESS_TOKEN, (err, decoded) => {
     if (err) {
@@ -42,23 +40,32 @@ const verifyUserRole = (req, res, next) => {
         .status(403)
         .json({ error: "Forbidden: Invalid token", error: err });
     }
+
     req.user = decoded;
     console.log("Decoded Token:", decoded);
+
     if (decoded.isSuperadmin) {
       // User is a superadmin, allow all actions
-      console.log(decoded.isSuperadmin)
       next();
-    } else if (decoded.isAdmin) {
+    } else if (!decoded.isSuperadmin) {
       // User is an admin, but only allow creating non-admin employees
+      console.log("isAdmin in request body:", req.body.isAdmin);
       if (!req.body.isAdmin) {
+        // isAdmin is false in the request, allow the action
         next();
       } else {
+        console.log("isAdmin is true in the request");
+        // isAdmin is true in the request, deny access
         return res.status(403).json({ error: "Forbidden: Not Authorized" });
       }
+    } else {
+      console.log("User is not an admin");
+      // User is not an admin, deny access
+      return res.status(403).json({ error: "Forbidden: Not Authorized" });
     }
-    
   });
 };
+
 
 // Middleware to verify the reset token
 const verifyResetToken = (req, res, next) => {
