@@ -66,7 +66,6 @@ const verifyUserRole = (req, res, next) => {
   });
 };
 
-
 // Middleware to verify the reset token
 const verifyResetToken = (req, res, next) => {
   const { token } = req.body;

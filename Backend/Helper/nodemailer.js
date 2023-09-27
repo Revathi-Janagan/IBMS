@@ -26,6 +26,30 @@ module.exports = {
       console.error("Error while sending Email:", error);
     }
   },
+  sendAdminRegisterEmail: async (email) => {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: GMAIL_USERNAME,
+          pass: GMAIL_PASSWORD,
+        },
+      });
+      const mailOptions = {
+        from: "srevathisona@gmail.com",
+        to: email,
+        subject: "Welcome, you are a Admin member of IBMS now ....",
+        html: `You have successfully registered as an Admin with us
+        ${email?.split("@")[0]}, 
+        Login and enjoy the services of IBMS...,
+        Your Password: ${password}`,
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error("Error while sending Email:", error);
+    }
+  },
   sendPasswordResetEmail: async (email, resetToken) => {
     try {
       const transporter = nodemailer.createTransport({

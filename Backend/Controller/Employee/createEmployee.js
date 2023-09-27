@@ -1,6 +1,7 @@
 const connection = require("../../Helper/db");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+const {sendAdminRegisterEmail} = require("../../Helper/nodemailer")
 
 module.exports = (req, res) => {
   const {
@@ -25,7 +26,7 @@ module.exports = (req, res) => {
     password,
     fieldsToAdd,
   } = req.body;
-console.log(req.body)
+  console.log(req.body);
   if (!Array.isArray(fieldsToAdd)) {
     return res.status(400).send({ message: "Invalid fieldsToAdd parameter" });
   }
@@ -88,11 +89,10 @@ console.log(req.body)
                     .send({ message: "Internal Error", error: err });
                 });
               }
+              sendAdminRegisterEmail(email, password);
             });
           });
         }
-
-       
 
         const personalInfoValues = {
           employee_id: employeeId,
@@ -347,32 +347,49 @@ console.log(req.body)
                                   //   message: `Employee ${name} created successfully`,
                                   //   employee_id: employeeId,
                                   // });
-                                  console.log("EmployeeId before selecting profile:", employeeId);
+                                  console.log(
+                                    "EmployeeId before selecting profile:",
+                                    employeeId
+                                  );
                                   connection.query(
                                     "SELECT * FROM employees WHERE employee_id = ?",
                                     [employeeId],
                                     (err, employeeResult) => {
                                       if (err) {
                                         console.error(err);
-                                        res.status(500).send({ message: "Internal Error" });
+                                        res
+                                          .status(500)
+                                          .send({ message: "Internal Error" });
                                       } else if (employeeResult.length > 0) {
                                         // Employee profile retrieved successfully, log it to the console
-                                        const employeeProfile = employeeResult[0];
-                                        console.log("Employee Profile:", employeeProfile);
-                              
+                                        const employeeProfile =
+                                          employeeResult[0];
+                                        console.log(
+                                          "Employee Profile:",
+                                          employeeProfile
+                                        );
+
                                         // Send a response to the client
                                         res.status(200).send({
                                           message: `Employee ${name} created successfully`,
                                           employee_id: employeeId,
                                         });
                                         console.log("Before sending response");
-                                        console.log("Employee Profile Created successfully");
+                                        console.log(
+                                          "Employee Profile Created successfully"
+                                        );
                                       } else {
                                         // Employee not found
-                                        res.status(404).send({ message: "Employee not found" });
+                                        res
+                                          .status(404)
+                                          .send({
+                                            message: "Employee not found",
+                                          });
                                       }
-                                  }
-                           )} });
+                                    }
+                                  );
+                                }
+                              });
                             }
                           );
                         }
