@@ -1,12 +1,12 @@
 const connection = require("../../Helper/db");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
-const {sendAdminRegisterEmail} = require("../../Helper/nodemailer")
+const { sendAdminRegisterEmail } = require("../../Helper/nodemailer");
+
 
 module.exports = (req, res) => {
   const {
     name,
-    profile_pic,
     experience,
     designation,
     education,
@@ -27,6 +27,13 @@ module.exports = (req, res) => {
     fieldsToAdd,
   } = req.body;
   console.log(req.body);
+
+  if (!req.file) {
+    return res.status(400).send({ message: "Please upload a profile picture" });
+  }
+
+  const userImage = req.file.filename;
+
   if (!Array.isArray(fieldsToAdd)) {
     return res.status(400).send({ message: "Invalid fieldsToAdd parameter" });
   }
@@ -40,7 +47,7 @@ module.exports = (req, res) => {
 
     const employeeValues = {
       name,
-      profile_pic,
+      userImage,
       experience,
       designation,
       education,
@@ -380,11 +387,9 @@ module.exports = (req, res) => {
                                         );
                                       } else {
                                         // Employee not found
-                                        res
-                                          .status(404)
-                                          .send({
-                                            message: "Employee not found",
-                                          });
+                                        res.status(404).send({
+                                          message: "Employee not found",
+                                        });
                                       }
                                     }
                                   );

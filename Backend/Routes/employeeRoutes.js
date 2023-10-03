@@ -2,17 +2,23 @@ const express = require("express");
 const router = express.Router();
 const EmployeeController = require("../Controller/Employee/EmployeeController");
 const { verifyUserRole } = require("../Middleware/TokenVerification");
+const { uploadImage } = require("../Config/multerConfig");
 
 // Route for creating an employee (superadmins only can create admins)
-router.post("/createEmployee", verifyUserRole, async (req, res, next) => {
-  try {
-    console.log("Inside createEmployee route handler");
-    await EmployeeController.createEmployee(req, res, next);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.post(
+  "/createEmployee",
+  uploadImage.single("userImage"),
+  verifyUserRole,
+  async (req, res, next) => {
+    try {
+      console.log("Inside createEmployee route handler");
+      await EmployeeController.createEmployee(req, res, next);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 router.get("/getAllEmployees", async (req, res, next) => {
   try {

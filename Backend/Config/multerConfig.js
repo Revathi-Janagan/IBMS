@@ -1,10 +1,27 @@
 const multer = require('multer');
+const path = require('path');
 
 // Configure storage for image uploads
-const imageStorage = multer.memoryStorage();
+const imageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'uploads/')); // Specify the directory for image uploads
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname); // Define how image filenames should be constructed
+  },
+});
 
 // Configure storage for document uploads
-const documentStorage = multer.memoryStorage();
+const documentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'uploads/documents')); // Specify the directory for document uploads
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname); // Define how document filenames should be constructed
+  },
+});
 
 // Configure file filter for images
 const imageFileFilter = (req, file, cb) => {

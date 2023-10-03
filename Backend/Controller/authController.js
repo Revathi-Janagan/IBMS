@@ -12,10 +12,18 @@ const saltRounds = 10;
 module.exports = {
   registerSuperAdmin: (req, res) => {
     console.log("Inside Super Admin Registration");
-    const { name, email, password, phone_number, profile_pic } = req.body;
-    if (!name || !email || !password || !phone_number || !profile_pic) {
-      return res.status(400).send({ message: "Please Fill All the Fields" });
+    const { name, email, password, phone_number } = req.body;
+
+    // Check if any required fields are missing
+    if (!name || !email || !password || !phone_number) {
+      return res.status(400).send({ message: "Please fill in all the fields" });
     }
+
+    if (!req.file) {
+      return res.status(400).send({ message: "Please upload a profile picture" });
+    }
+
+    const userImage = req.file.filename;
 
     // Check if there is already a super admin
     const checkSuperAdminSql = "SELECT * FROM super_admin";
@@ -35,7 +43,7 @@ module.exports = {
       // If there is no super admin, proceed with the registration
       const insertSQL =
         "INSERT INTO super_admin (name, email, password, phone_number, profile_pic) VALUES (?, ?, ?, ?, ?)";
-      const values = [name, email, hashedPassword, phone_number, profile_pic];
+      const values = [name, email, hashedPassword, phone_number, userImage];
       connection.query(insertSQL, values, (err, result) => {
         if (err) {
           console.error(err);
@@ -53,8 +61,9 @@ module.exports = {
     });
   },
   deleteSuperAdmin: (req, res) => {
-    const { email } = req.body; // Assuming  pass the email as a route parameter
+    const { email } = req.body;
 
+    // Check if the email is provided
     if (!email) {
       return res
         .status(400)
@@ -93,26 +102,26 @@ module.exports = {
   },
   loginUser: (req, res) => {
     const { email, password } = req.body;
-    console.log("Content is",req.body);
+
+    // Check if both email and password are provided
+    if (!email || !password) {
+      return res.status(400).send({ message: "Please provide email and password" });
+    }
 
     // Check if the user is a super admin
     const superAdminSql = "SELECT * FROM super_admin WHERE email = ?";
     connection.query(superAdminSql, [email], (err, superAdminResult) => {
       if (err) {
-        return res.status(400).send({ message: "Internal Error", error:err });
+        return res.status(400).send({ message: "Internal Error", error: err });
       }
       const superAdmin = superAdminResult[0];
-       console.log("Superadmin is",superAdmin);
 
       if (superAdmin) {
         // The user is a super admin
-        console.log(superAdmin.super_admin_id);
-
         req.user = {
           role: "superadmin", // Set the user's role
           id: superAdmin.super_admin_id, // Include other relevant user information
         };
-        console.log("User is a superadmin", req.user);
 
         bcrypt.compare(password, superAdmin.password, (err, result) => {
           if (err) {
@@ -126,7 +135,6 @@ module.exports = {
               userId: superAdmin.super_admin_id,
               isSuperadmin,
             };
-            console.log("Token Payload", tokenPayload);
             const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
               expiresIn: "12h",
             });
@@ -136,7 +144,7 @@ module.exports = {
               AccessToken: token,
             });
           }
-          return res.status(400).send({ message: "Password Not Match" });
+          return res.status(400).send({ message: "Password does not match" });
         });
       } else {
         // The user is not a super admin, check if they are an admin
@@ -146,12 +154,11 @@ module.exports = {
             return res.status(400).send({ message: "Internal Error" });
           }
           const admin = adminResult[0];
-          console.log("admin Result is",admin)
 
           if (!admin) {
             return res
               .status(400)
-              .send({ message: "User not Found", error: err });
+              .send({ message: "User not found", error: err });
           }
           req.user = {
             role: "admin", // Set the user's role
@@ -185,7 +192,7 @@ module.exports = {
             }
             return res
               .status(400)
-              .send({ message: "Password Not Match", error: err });
+              .send({ message: "Password does not match", error: err });
           });
         });
       }
@@ -225,6 +232,7 @@ module.exports = {
     const { newPassword } = req.body;
     const { email } = req.resetTokenData;
 
+    // Check if a new password is provided
     if (!newPassword) {
       return res.status(400).send({ message: "New password is required" });
     }
