@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 const EmployeeController = require("../Controller/Employee/EmployeeController");
 const { verifyUserRole } = require("../Middleware/TokenVerification");
-const { uploadImage } = require("../Config/multerConfig");
+const upload = require("../Config/multerConfig");
 
 // Route for creating an employee (superadmins only can create admins)
 router.post(
   "/createEmployee",
-  uploadImage.single("userImage"),
+  upload.single("userImage"),
   verifyUserRole,
   async (req, res, next) => {
     try {

@@ -22,8 +22,8 @@ const generateToken = (user) => {
   };
   console.log("Token payload is", tokenPayload);
   const token = jwt.sign(tokenPayload, ACCESS_TOKEN, options);
-
-  return token;
+  console.log("Token is ", token);
+  return token; 
 };
 
 const verifyUserRole = (req, res, next) => {

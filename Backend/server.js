@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const connection = require("../Backend/Helper/db");
+const path = require("path");
 const routes = require("../Backend/Routes/index");
 const {verifyUserRole,determineUserRole} = require("./Middleware/TokenVerification")
 
@@ -12,6 +13,7 @@ app.use(bodyParser.json());
 
 app.use(express.json());
 app.use("/api", routes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(determineUserRole);
 app.use(verifyUserRole);
 

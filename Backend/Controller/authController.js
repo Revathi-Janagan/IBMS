@@ -20,7 +20,9 @@ module.exports = {
     }
 
     if (!req.file) {
-      return res.status(400).send({ message: "Please upload a profile picture" });
+      return res
+        .status(400)
+        .send({ message: "Please upload a profile picture" });
     }
 
     const userImage = req.file.filename;
@@ -34,9 +36,9 @@ module.exports = {
       }
 
       // If there is already a super admin, return an error
-      if (result.length > 0) {
-        return res.status(409).send({ message: "Super Admin already exists" });
-      }
+      // if (result.length > 0) {
+      //   return res.status(409).send({ message: "Super Admin already exists" });
+      // }
 
       const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
@@ -105,7 +107,9 @@ module.exports = {
 
     // Check if both email and password are provided
     if (!email || !password) {
-      return res.status(400).send({ message: "Please provide email and password" });
+      return res
+        .status(400)
+        .send({ message: "Please provide email and password" });
     }
 
     // Check if the user is a super admin
@@ -135,6 +139,7 @@ module.exports = {
               userId: superAdmin.super_admin_id,
               isSuperadmin,
             };
+            console.log("Token Payload At Login", tokenPayload);
             const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
               expiresIn: "12h",
             });
@@ -168,12 +173,10 @@ module.exports = {
           // Check if the user is an admin
           bcrypt.compare(password, admin.password, (err, result) => {
             if (err) {
-              return res
-                .status(400)
-                .send({
-                  message: "Error while comparing passwords",
-                  error: err,
-                });
+              return res.status(400).send({
+                message: "Error while comparing passwords",
+                error: err,
+              });
             }
             if (result) {
               const isSuperadmin = false; // Admin is not a super admin
