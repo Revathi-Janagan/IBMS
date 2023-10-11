@@ -35,10 +35,10 @@ module.exports = {
         return res.status(500).send({ message: "Internal Error" });
       }
 
-      // If there is already a super admin, return an error
-      // if (result.length > 0) {
-      //   return res.status(409).send({ message: "Super Admin already exists" });
-      // }
+     // If there is already a super admin, return an error
+      if (result.length > 0) {
+        return res.status(409).send({ message: "Super Admin already exists" });
+      }
 
       const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
