@@ -193,9 +193,15 @@ module.exports = {
                 AccessToken: token,
               });
             }
-            return res
-              .status(400)
-              .send({ message: "Password does not match", error: err });
+            // return res
+            //   .status(400)
+            //   .send({ message: "Password does not match", error: err });
+            else {
+              // Password does not match
+              const errorMessage = "Password does not match";
+              setErrorDialogOpen(true); // Show the error dialog
+              setErrorMessage(errorMessage); // Set the error message
+            }
           });
         });
       }
