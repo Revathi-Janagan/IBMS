@@ -12,7 +12,8 @@ router.post(
 );
 router.get("/getallcustomer", CustomerController.GetAllCustomer);
 router.get("getcustomebyid/:id", CustomerController.GetCustomerById);
-router.put("/updatecustomer/:id", CustomerController.UpdateCustomer);
+router.put("/updatecustomer/:id", uploadImage.single("userImage"),
+uploadDocument.single("file_content"),CustomerController.UpdateCustomer);
 router.delete(
   "/deletecustomer/:id",
   verifyUserRole,

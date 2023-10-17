@@ -35,7 +35,7 @@ module.exports = (req, res) => {
       business_name,
       business_type,
       business_category,
-      profile_pic: userImage, // Assuming this is the correct field name in the database
+      profile_pic: userImage,
     };
 
     // Insert into the Customers table
