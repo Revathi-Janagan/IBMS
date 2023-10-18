@@ -1,19 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const CustomerController = require("../Controller/Customer/CustomerController");
-const { verifyUserRole } = require("../middleware/middleware"); // Import the verifyUserRole middleware
-const { uploadImage, uploadDocument } = require("../Config/multerConfig");
+const { verifyUserRole } = require("../Middleware/TokenVerification"); // Import the verifyUserRole middleware
+const upload = require("../Config/multerConfig");
 
 router.post(
   "/createcustomer",
-  uploadImage.single("userImage"),
-  uploadDocument.single("file_content"),
+  upload.fields([
+    { name: "profile_pic", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
   CustomerController.CreateCustomer
 );
 router.get("/getallcustomer", CustomerController.GetAllCustomer);
-router.get("getcustomebyid/:id", CustomerController.GetCustomerById);
-router.put("/updatecustomer/:id", uploadImage.single("userImage"),
-uploadDocument.single("file_content"),CustomerController.UpdateCustomer);
+router.get("/getcustomebyid/:id", CustomerController.GetCustomerById);
+router.put(
+  "/updatecustomer/:id",
+  upload.fields([
+    { name: "profile_pic", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
+  CustomerController.UpdateCustomer
+);
 router.delete(
   "/deletecustomer/:id",
   verifyUserRole,

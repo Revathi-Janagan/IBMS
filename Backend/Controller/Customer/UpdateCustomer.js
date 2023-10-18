@@ -1,5 +1,5 @@
 const connection = require("../../Helper/db");
-const upload = require("./multerConfig");
+const upload = require("../../Config/multerConfig");
 
 module.exports = (req, res) => {
   const customerId = req.params.customerId; // Assuming the customer ID is provided as a URL parameter
@@ -16,7 +16,11 @@ module.exports = (req, res) => {
     business_number,
     email,
     phone_number,
-    social_media_link,
+    facebook,
+    instagram,
+    youtube,
+    linkedin,
+    twitter,
     website_address,
   } = req.body;
 
@@ -44,7 +48,11 @@ module.exports = (req, res) => {
   };
 
   const updatedSocialMediaLinks = {
-    social_media_link,
+    facebook,
+    instagram,
+    youtube,
+    linkedin,
+    twitter,
   };
 
   const updatedWebsite = {
@@ -211,7 +219,7 @@ module.exports = (req, res) => {
                                   }
                                 );
                               } else {
-                                // Commit the transaction when there's no document to insert
+                                // Commit the transaction when there's no document to update
                                 connection.commit((err) => {
                                   if (err) {
                                     console.error(err);

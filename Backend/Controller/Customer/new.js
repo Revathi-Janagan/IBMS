@@ -2,7 +2,7 @@ const connection = require("../../Helper/db");
 
 module.exports = (req, res) => {
   console.log('Received request data:', req.body); // Log the form fields
-  console.log('Received files:', req.files);
+    console.log('Received files:', req.files);
   const {
     customer_name,
     business_name,
@@ -20,11 +20,12 @@ module.exports = (req, res) => {
     linkedin,
     twitter,
     website_address,
+    
   } = req.body;
 
-  const profile_pic = req.files["profile_pic"][0].filename;
-  console.log(profile_pic);
 
+  const profile_pic = req.files["profile_pic"][0].filename;
+  console.log(profile_pic)
   // Begin a transaction
   connection.beginTransaction((err) => {
     if (err) {
@@ -37,7 +38,7 @@ module.exports = (req, res) => {
       business_name,
       business_type,
       business_category,
-      profile_pic,
+      profile_pic, 
     };
 
     // Insert into the Customers table
@@ -87,7 +88,9 @@ module.exports = (req, res) => {
                 if (err) {
                   console.error(err);
                   return connection.rollback(() => {
-                    res.status(500).send({ message: "Internal Error", error: err });
+                    res
+                      .status(500)
+                      .send({ message: "Internal Error", error: err });
                   });
                 }
 
@@ -104,7 +107,9 @@ module.exports = (req, res) => {
                     if (err) {
                       console.error(err);
                       return connection.rollback(() => {
-                        res.status(500).send({ message: "Internal Error", error: err });
+                        res
+                          .status(500)
+                          .send({ message: "Internal Error", error: err });
                       });
                     }
 
@@ -153,51 +158,58 @@ module.exports = (req, res) => {
                             }
 
                             // Check if a document was uploaded
-                            const documentFile = req.files["document"];
-                            if (documentFile) {
-                              const documentFileName = documentFile[0].filename;
+                            const document = req.files["document"];
+                            if (document) {
+                              const document = document[0].filename;
                               // Now you can safely access the filename.
-                              console.log(documentFileName);
-                              const fs = require("fs");
-                              const contentBuffer = fs.readFileSync(documentFile[0].path);
+                            } else {
+                              // Handle the case where "document" file is not uploaded or not defined.
+                            }
+                            console.log(document)
+                            const fs = require("fs");
+                            const contentBuffer = fs.readFileSync(
+                              req.files["document"][0].path
+                            );
 
-                              // Insert the uploaded document into the UploadedFiles table
-                              const uploadedFileValues = {
-                                customer_id: customerId,
-                                file_name: documentFileName,
-                                file_content: contentBuffer,
-                              };
-                              // You need to read the content of the uploaded file using fs module.
-                              connection.query(
-                                "INSERT INTO UploadedFiles SET ?",
-                                uploadedFileValues,
-                                (err) => {
-                                  if (err) {
-                                    console.error(err);
-                                    return connection.rollback(() => {
-                                      res.status(500).send({
-                                        message: "Internal Error",
-                                        error: err,
-                                      });
+                            // Insert the uploaded document into the UploadedFiles table
+                            const uploadedFileValues = {
+                              customer_id: customerId,
+                              file_name: document,
+                              file_content: contentBuffer,
+                            };
+
+                            // You need to read the content of the uploaded file. For example, using fs module.
+                            connection.query(
+                              "INSERT INTO UploadedFiles SET ?",
+                              uploadedFileValues,
+                              (err) => {
+                                if (err) {
+                                  console.error(err);
+                                  return connection.rollback(() => {
+                                    res.status(500).send({
+                                      message: "Internal Error",
+                                      error: err,
                                     });
-                                  }
-
-                                  // Commit the transaction
-                                  connection.commit((err) => {
-                                    if (err) {
-                                      console.error(err);
-                                      res.status(500).send({ message: "Internal Error" });
-                                    } else {
-                                      // Transaction was successful, send a response to the client
-                                      res.status(200).send({
-                                        message: `Customer ${customer_name} created successfully`,
-                                        customer_id: customerId,
-                                      });
-                                    }
                                   });
                                 }
-                              );
-                            }
+
+                                // Commit the transaction
+                                connection.commit((err) => {
+                                  if (err) {
+                                    console.error(err);
+                                    res
+                                      .status(500)
+                                      .send({ message: "Internal Error" });
+                                  } else {
+                                    // Transaction was successful, send a response to the client
+                                    res.status(200).send({
+                                      message: `Customer ${customer_name} created successfully`,
+                                      customer_id: customerId,
+                                    });
+                                  }
+                                });
+                              }
+                            );
                           }
                         );
                       }
