@@ -32,7 +32,7 @@ module.exports = (req, res) => {
     return res.status(400).send({ message: "Please upload a profile picture" });
   }
 
-  const userImage = req.files["profile_pic"][0].filename;
+  const profile_pic = req.files["profile_pic"][0].filename;
 console.log("Profile Picture of Employee",userImage)
   
   console.log("Before database query");
@@ -45,7 +45,7 @@ console.log("Profile Picture of Employee",userImage)
 
     const employeeValues = {
       name,
-      userImage,
+      profile_pic,
       experience,
       designation,
       education,
