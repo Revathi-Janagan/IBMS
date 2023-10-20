@@ -26,7 +26,7 @@ module.exports = {
       console.error("Error while sending Email:", error);
     }
   },
-  sendAdminRegisterEmail: async (email) => {
+  sendAdminRegisterEmail: async (email,password) => {
     try {
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -42,6 +42,7 @@ module.exports = {
         html: `You have successfully registered as an Admin with us
         ${email?.split("@")[0]}, 
         Login and enjoy the services of IBMS...,
+        your username :${email}
         Your Password: ${password}`,
       };
 

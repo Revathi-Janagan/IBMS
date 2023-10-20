@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const { sendAdminRegisterEmail } = require("../../Helper/nodemailer");
 
-
 module.exports = (req, res) => {
   const {
     name,
@@ -24,17 +23,17 @@ module.exports = (req, res) => {
     portfolio_url,
     github_url,
     password,
-    
   } = req.body;
   console.log(req.body);
+
 
   if (!req.files) {
     return res.status(400).send({ message: "Please upload a profile picture" });
   }
 
   const profile_pic = req.files["profile_pic"][0].filename;
-console.log("Profile Picture of Employee",userImage)
-  
+  console.log("Profile Picture of Employee", profile_pic);
+
   console.log("Before database query");
   // Begin a transaction
   connection.beginTransaction((err) => {
@@ -42,7 +41,7 @@ console.log("Profile Picture of Employee",userImage)
       console.error(err);
       return res.status(500).send({ message: "Internal Error", error: err });
     }
-
+    const isAdmin = req.body.isAdmin === "Yes" ? 1 : 0;
     const employeeValues = {
       name,
       profile_pic,
@@ -63,10 +62,7 @@ console.log("Profile Picture of Employee",userImage)
             res.status(500).send({ message: "Internal Error", error: err });
           });
         }
-
         const employeeId = result.insertId;
-
-        // ...
 
         if (isAdmin) {
           // Hash the password
@@ -77,14 +73,17 @@ console.log("Profile Picture of Employee",userImage)
                 res.status(500).send({ message: "Internal Error", error: err });
               });
             }
-
+            
+            // The `password` variable should be defined here
+            const password = req.body.password;
+            
             // Insert into the admin table with the hashed password
             const adminValues = {
               employee_id: employeeId,
               email,
               password: hashedPassword, // Use the hashed password
             };
-
+        
             connection.query("INSERT INTO admin SET ?", adminValues, (err) => {
               if (err) {
                 console.error(err);
@@ -92,16 +91,23 @@ console.log("Profile Picture of Employee",userImage)
                   res
                     .status(500)
                     .send({ message: "Internal Error", error: err });
-                });
-              }
+                  });
+                }
+              // Now, call the sendAdminRegisterEmail function with the correct password
               sendAdminRegisterEmail(email, password);
+              alert("Mail Send Successfully!!!")
             });
           });
-        }
+        }                     
+        const dob = new Date(
+          "Sat Mar 20 1999 00:00:00 GMT+0530 (India Standard Time)"
+        );
+        const formattedDOB = dob.toISOString().slice(0, 10);
+        // The value of formattedDOB will be in 'YYYY-MM-DD' format, e.g., '1999-03-20'
 
         const personalInfoValues = {
           employee_id: employeeId,
-          dob,
+          dob: formattedDOB,
           marital_status,
           gender,
           place,
@@ -136,6 +142,12 @@ console.log("Profile Picture of Employee",userImage)
                     res.status(500).send({ message: "Internal Error" });
                   });
                 }
+                const physicallyChallengedString =
+                  req.body.physically_challenged;
+
+                // Convert to an integer (0 for "No," 1 for "Yes")
+                const physically_challenged =
+                  physicallyChallengedString.toLowerCase() === "yes" ? 1 : 0;
 
                 const extraInfoValues = {
                   employee_id: employeeId,

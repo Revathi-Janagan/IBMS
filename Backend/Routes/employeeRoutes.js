@@ -7,7 +7,7 @@ const upload = require("../Config/multerConfig");
 // Route for creating an employee (superadmins only can create admins)
 router.post(
   "/createEmployee",
-  upload.single("userImage"),
+  upload.fields([{ name: "profile_pic", maxCount: 1 }]),
   verifyUserRole,
   async (req, res, next) => {
     try {
@@ -20,7 +20,7 @@ router.post(
   }
 );
 
-router.get("/getAllEmployees", async (req, res, next) => {
+router.get("/getallemployees", async (req, res, next) => {
   try {
     // Allow both admins and superadmins to get all employees
     await EmployeeController.getAllEmployees(req, res, next);
@@ -42,14 +42,18 @@ router.get("/getEmployeeById/:id", async (req, res, next) => {
 });
 
 // Route for updating an employee
-router.put("/updateEmployee/:id", async (req, res, next) => {
-  try {
-    await EmployeeController.updateEmployeeById(req, res, next);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+router.put(
+  "/updateEmployee/:id",
+  upload.fields([{ name: "profile_pic", maxCount: 1 }]),
+  async (req, res, next) => {
+    try {
+      await EmployeeController.updateEmployeeById(req, res, next);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
 
 // Route for deleting an employee (superadmins only)
 router.delete(
