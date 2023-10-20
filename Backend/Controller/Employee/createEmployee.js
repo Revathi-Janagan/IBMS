@@ -24,7 +24,7 @@ module.exports = (req, res) => {
     portfolio_url,
     github_url,
     password,
-    fieldsToAdd,
+    
   } = req.body;
   console.log(req.body);
 
@@ -34,9 +34,7 @@ module.exports = (req, res) => {
 
   const userImage = req.files["profile_pic"][0].filename;
 console.log("Profile Picture of Employee",userImage)
-  if (!Array.isArray(fieldsToAdd)) {
-    return res.status(400).send({ message: "Invalid fieldsToAdd parameter" });
-  }
+  
   console.log("Before database query");
   // Begin a transaction
   connection.beginTransaction((err) => {

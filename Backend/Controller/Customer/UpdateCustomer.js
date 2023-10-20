@@ -3,8 +3,6 @@ const upload = require("../../Config/multerConfig");
 
 module.exports = (req, res) => {
   const customerId = req.params.customerId; // Assuming the customer ID is provided as a URL parameter
-
-  // Extract all the fields you want to update from the request body
   const {
     customer_name,
     business_name,
