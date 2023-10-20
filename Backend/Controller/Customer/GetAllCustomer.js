@@ -3,26 +3,36 @@ const connection = require("../../Helper/db");
 module.exports = (req, res) => {
   // Query to retrieve all customer profiles
   const sql = `
-    SELECT
-      c.*,
-      bi.business_place,
-      bi.district,
-      bi.language,
-      cd.business_number,
-      cd.email,
-      od.phone_number,
-      sml.social_media_link,
-      w.website_address,
-      uf.file_name AS uploaded_file_name,
-      uf.file_path AS uploaded_file_path,
-      c.profile_pic AS customer_profile_pic
-    FROM Customers c
-    LEFT JOIN BusinessInfo bi ON c.customer_id = bi.customer_id
-    LEFT JOIN ContactDetails cd ON c.customer_id = cd.customer_id
-    LEFT JOIN OwnerDetails od ON c.customer_id = od.customer_id
-    LEFT JOIN SocialMediaLinks sml ON c.customer_id = sml.customer_id
-    LEFT JOIN Website w ON c.customer_id = w.customer_id
-    LEFT JOIN UploadedFiles uf ON c.customer_id = uf.customer_id
+  SELECT
+  c.customer_id AS id, -- Alias the customer_id as id for uniqueness
+  c.customer_name,
+  c.business_name,
+  c.business_type,
+  c.business_category,
+  bi.business_place,
+  bi.district,
+  bi.language,
+  cd.business_number,
+  cd.email,
+  od.phone_number,
+  sml.facebook,
+  sml.instagram,
+  sml.youtube,
+  sml.linkedin,
+  sml.twitter,
+  w.website_address,
+  uf.file_name AS uploaded_file_path,
+  uf.file_content AS uploaded_file_content,
+  c.profile_pic AS customer_profile_pic
+FROM Customers c
+LEFT JOIN BusinessInfo bi ON c.customer_id = bi.customer_id
+LEFT JOIN ContactDetails cd ON c.customer_id = cd.customer_id
+LEFT JOIN OwnerDetails od ON c.customer_id = od.customer_id
+LEFT JOIN SocialMediaLinks sml ON c.customer_id = sml.customer_id
+LEFT JOIN Website w ON c.customer_id = w.customer_id
+LEFT JOIN UploadedFiles uf ON c.customer_id = uf.customer_id;
+
+
   `;
 
   // Execute the SQL query to retrieve all customer profiles

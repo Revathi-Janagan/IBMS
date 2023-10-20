@@ -28,12 +28,12 @@ module.exports = (req, res) => {
   } = req.body;
   console.log(req.body);
 
-  if (!req.file) {
+  if (!req.files) {
     return res.status(400).send({ message: "Please upload a profile picture" });
   }
 
-  const userImage = req.file.filename;
-
+  const userImage = req.files["profile_pic"][0].filename;
+console.log("Profile Picture of Employee",userImage)
   if (!Array.isArray(fieldsToAdd)) {
     return res.status(400).send({ message: "Invalid fieldsToAdd parameter" });
   }

@@ -1,8 +1,6 @@
 const connection = require("../../Helper/db");
 
-module.exports = (req, res) => {
-  console.log('Received request data:', req.body); // Log the form fields
-  console.log('Received files:', req.files);
+module.exports = (req, res) => {  
   const {
     customer_name,
     business_name,

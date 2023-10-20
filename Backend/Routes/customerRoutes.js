@@ -13,7 +13,7 @@ router.post(
   CustomerController.CreateCustomer
 );
 router.get("/getallcustomer", CustomerController.GetAllCustomer);
-router.get("/getcustomebyid/:id", CustomerController.GetCustomerById);
+router.get("/getcustomerbyid/:id", CustomerController.GetCustomerById);
 router.put(
   "/updatecustomer/:id",
   upload.fields([
