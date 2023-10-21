@@ -50,7 +50,7 @@ GROUP BY e.employee_id,
       console.error(err);
       return res.status(500).send({ message: "Internal Error" });
     }
-    res.status(200).json(results);
+    res.status(200).json({employees:results});
     console.log("Listed Succesfully")
   });
 };
