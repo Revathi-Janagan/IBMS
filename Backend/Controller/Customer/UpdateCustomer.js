@@ -230,6 +230,7 @@ module.exports = (req, res) => {
                                     res.status(200).send({
                                       message: `Customer ${customer_name} updated successfully`,
                                       customer_id: customerId,
+                                      
                                     });
                                   }
                                 });

@@ -9,7 +9,7 @@ const {verifyUserRole,determineUserRole} = require("./Middleware/TokenVerificati
 
 const app = express();
 app.use(cors({ origin: "http://localhost:3000", methods: "*" }));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.json());
 app.use("/api", routes);

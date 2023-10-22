@@ -2,10 +2,12 @@ const connection = require("../../Helper/db");
 
 module.exports = (req, res) => {
   const employeeId = req.params.id;
+  console.log("Requested Id is", employeeId);
   const getEmployeeSQL = `
     SELECT e.employee_id, 
            e.name, 
            e.profile_pic,
+           e.education,
            e.experience,
            e.designation,
            e.isAdmin,
@@ -35,6 +37,7 @@ module.exports = (req, res) => {
     WHERE e.employee_id = ?
     GROUP BY e.employee_id, 
              e.name, 
+             e.education,
              e.profile_pic,
              e.experience,
              e.designation,
@@ -61,7 +64,14 @@ module.exports = (req, res) => {
     if (results.length === 0) {
       return res.status(404).send({ message: "Employee not found" });
     }
-    res.status(200).json(results[0]);
-    console.log("Get Employee By Employee ID Done Successfully!!!")
+
+    // Process the "skills" field into an array
+    const employee = results[0];
+    if (employee.skills) {
+      employee.skills = employee.skills.split(',').map(skill => skill.trim());
+    }
+
+    res.status(200).json({ employee });
+    console.log("Get Employee By Employee ID Done Successfully!!!");
   });
 };

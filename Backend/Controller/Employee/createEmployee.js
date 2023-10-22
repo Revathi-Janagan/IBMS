@@ -95,7 +95,7 @@ module.exports = (req, res) => {
                 }
               // Now, call the sendAdminRegisterEmail function with the correct password
               sendAdminRegisterEmail(email, password);
-              alert("Mail Send Successfully!!!")
+             
             });
           });
         }                     
