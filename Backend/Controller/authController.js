@@ -121,24 +121,33 @@ module.exports = {
       const superAdmin = superAdminResult[0];
 
       if (superAdmin) {
+        const user = superAdmin;
         // The user is a super admin
         req.user = {
           role: "superadmin", // Set the user's role
           id: superAdmin.super_admin_id, // Include other relevant user information
+          isAdmin: false,
         };
 
+        
+        if (!user) {
+          return res.status(400).send({ message: "User not Found" });
+        }
         bcrypt.compare(password, superAdmin.password, (err, result) => {
           if (err) {
             return res
               .status(400)
               .send({ message: "Error while comparing passwords" });
           }
-          if (result) {
+          if (user) {
             const isSuperadmin = true; // Super admin has full access
             const tokenPayload = {
               userId: superAdmin.super_admin_id,
               isSuperadmin,
-            };
+              name:user.name,
+              profile_pic :user.profile_pic,
+
+            };           
             console.log("Token Payload At Login", tokenPayload);
             const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
               expiresIn: "12h",
@@ -165,9 +174,11 @@ module.exports = {
               .status(400)
               .send({ message: "User not found", error: err });
           }
+          const user = admin;
           req.user = {
             role: "admin", // Set the user's role
             id: admin.admin_id, // Include other relevant user information
+            isAdmin: true,
           };
 
           // Check if the user is an admin
@@ -183,7 +194,10 @@ module.exports = {
               const tokenPayload = {
                 userId: admin.admin_id,
                 isSuperadmin,
+                name:user.name,
+                profile_pic :user.profile_pic,
               };
+              console.log("token Payload",tokenPayload)
               const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
                 expiresIn: "12h",
               });

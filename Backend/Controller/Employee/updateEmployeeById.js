@@ -4,7 +4,6 @@ module.exports = (req, res) => {
   const employeeId = req.params.id;
   const {
     name,
-    profile_pic,
     experience,
     designation,
     education,
@@ -23,6 +22,7 @@ module.exports = (req, res) => {
     github_url,
     password,
   } = req.body;
+  const profile_pic = req.file ? req.file.filename : null;
 
   // Begin a transaction
   connection.beginTransaction((err) => {
@@ -56,7 +56,7 @@ module.exports = (req, res) => {
       // Update the employees table
       const updateEmployeeSQL = `
         UPDATE employees
-        SET name=?, profile_pic=?, experience=?, designation=?, isAdmin=?
+        SET name=?, profile_pic=?, experience=?,education=?, designation=?, isAdmin=?
         WHERE employee_id=?
       `;
 
@@ -64,7 +64,8 @@ module.exports = (req, res) => {
         name,
         profile_pic,
         experience,
-        designation,        
+        education,
+        designation,
         isAdmin,
         employeeId,
       ];
@@ -209,12 +210,10 @@ module.exports = (req, res) => {
                           if (err) {
                             console.error(err);
                             connection.rollback(() => {
-                              res
-                                .status(500)
-                                .send({
-                                  message: "Internal Error",
-                                  error: err,
-                                });
+                              res.status(500).send({
+                                message: "Internal Error",
+                                error: err,
+                              });
                             });
                             return;
                           }
@@ -238,12 +237,10 @@ module.exports = (req, res) => {
                                 if (err) {
                                   console.error(err);
                                   connection.rollback(() => {
-                                    res
-                                      .status(500)
-                                      .send({
-                                        message: "Internal Error",
-                                        error: err,
-                                      });
+                                    res.status(500).send({
+                                      message: "Internal Error",
+                                      error: err,
+                                    });
                                   });
                                   return;
                                 }
@@ -261,12 +258,10 @@ module.exports = (req, res) => {
                               if (err) {
                                 console.error(err);
                                 connection.rollback(() => {
-                                  res
-                                    .status(500)
-                                    .send({
-                                      message: "Internal Error",
-                                      error: err,
-                                    });
+                                  res.status(500).send({
+                                    message: "Internal Error",
+                                    error: err,
+                                  });
                                 });
                                 return;
                               }
@@ -320,12 +315,10 @@ module.exports = (req, res) => {
                           if (err) {
                             console.error(err);
                             connection.rollback(() => {
-                              res
-                                .status(500)
-                                .send({
-                                  message: "Internal Error",
-                                  error: err,
-                                });
+                              res.status(500).send({
+                                message: "Internal Error",
+                                error: err,
+                              });
                             });
                             return;
                           }

@@ -68,7 +68,7 @@ module.exports = (req, res) => {
           const adminValues = {
             employee_id: employeeId,
             email,
-            password: hashedPassword,
+            password: hashedPassword,            
           };
 
           connection.query("INSERT INTO admin SET ?", adminValues, (err) => {
@@ -83,8 +83,23 @@ module.exports = (req, res) => {
         });
       }
 
-      const formattedDOB = new Date(dob).toISOString().slice(0, 10);
+      const dob = req.body.dob; // Assuming 'dob' is provided in the request body
 
+      if (!dob) {
+        return res.status(400).send({ message: "Date of birth is required" });
+      }
+      
+      const dobDate = new Date(dob);
+      
+      if (isNaN(dobDate)) {
+        return res.status(400).send({ message: "Invalid date of birth" });
+      }
+      
+      // If the code reaches here, 'dobDate' is a valid Date object
+      const formattedDOB = dobDate.toISOString().slice(0, 10);
+      
+      // Continue processing with 'formattedDOB'
+      
       const personalInfoValues = {
         employee_id: employeeId,
         dob: formattedDOB,

@@ -79,4 +79,6 @@ router.delete(
   }
 );
 
+router.get("/getalladmins",EmployeeController.adminsList)
+
 module.exports = router;
