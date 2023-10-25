@@ -1,22 +1,31 @@
 const connection = require("../../Helper/db");
 
 module.exports = (req, res) => {
-  const customerId = req.params.customerId; // Assuming the customer ID is passed as a route parameter
+  const customerId = req.params.id; // Assuming the customer ID is passed as a route parameter
+  console.log("Requested Customer ID:", customerId);
 
   // Query to retrieve the complete profile of a customer with the specified customer_id
   const sql = `
     SELECT
-      c.*,
+      c.customer_id AS id, -- Alias the customer_id as id for uniqueness
+      c.customer_name,
+      c.business_name,
+      c.business_type,
+      c.business_category,
       bi.business_place,
       bi.district,
       bi.language,
       cd.business_number,
       cd.email,
       od.phone_number,
-      sml.social_media_link,
+      sml.facebook,
+      sml.instagram,
+      sml.youtube,
+      sml.linkedin,
+      sml.twitter,
       w.website_address,
-      uf.file_name AS uploaded_file_name,
-      uf.file_path AS uploaded_file_path,
+      uf.file_name AS uploaded_file_path,
+      uf.file_content AS uploaded_file_content,
       c.profile_pic AS customer_profile_pic
     FROM Customers c
     LEFT JOIN BusinessInfo bi ON c.customer_id = bi.customer_id
@@ -40,7 +49,7 @@ module.exports = (req, res) => {
       return res.status(404).send({ message: "Customer not found" });
     }
 
-    // Return the complete customer profile as JSON (the first result from the query)
+    // Return the customer profile as JSON (the first result from the query)
     res.status(200).json({ customer: results[0] });
   });
 };

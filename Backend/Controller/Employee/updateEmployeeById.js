@@ -4,7 +4,6 @@ module.exports = (req, res) => {
   const employeeId = req.params.id;
   const {
     name,
-    profile_pic,
     experience,
     designation,
     education,
@@ -23,6 +22,7 @@ module.exports = (req, res) => {
     github_url,
     password,
   } = req.body;
+  const profile_pic = req.file ? req.file.filename : null;
 
   // Begin a transaction
   connection.beginTransaction((err) => {
@@ -52,19 +52,25 @@ module.exports = (req, res) => {
         });
         return;
       }
-
       // Update the employees table
       const updateEmployeeSQL = `
-        UPDATE employees
-        SET name=?, profile_pic=?, experience=?, designation=?, isAdmin=?
-        WHERE employee_id=?
-      `;
+UPDATE employees
+SET
+  name=?,
+  ${req.file ? "profile_pic=?," : ""}
+  experience=?,
+  education=?,
+  designation=?,
+  isAdmin=?
+WHERE employee_id=?
+`;
 
       const employeeValues = [
         name,
-        profile_pic,
+        req.file ? profile_pic : null, // Use the new image or null
         experience,
-        designation,        
+        education,
+        designation,
         isAdmin,
         employeeId,
       ];
@@ -82,13 +88,12 @@ module.exports = (req, res) => {
           const updateAdminSQL = `
             UPDATE admin
             SET
-              email=?,
-              username=?,
+              email=?,              
               password=?
             WHERE employee_id=?
           `;
 
-          const adminValues = [email, username, password, employeeId];
+          const adminValues = [email, password, employeeId];
 
           connection.query(updateAdminSQL, adminValues, (err) => {
             if (err) {
@@ -102,6 +107,8 @@ module.exports = (req, res) => {
         }
 
         // Update the personal_information table
+
+        const dobMySQLFormat = new Date(dob).toJSON().slice(0, 10);
         const updatePersonalInfoSQL = `
           UPDATE personal_information
           SET dob=?, marital_status=?, gender=?, place=?
@@ -109,7 +116,7 @@ module.exports = (req, res) => {
         `;
 
         const personalInfoValues = [
-          dob,
+          dobMySQLFormat,
           marital_status,
           gender,
           place,
@@ -209,12 +216,10 @@ module.exports = (req, res) => {
                           if (err) {
                             console.error(err);
                             connection.rollback(() => {
-                              res
-                                .status(500)
-                                .send({
-                                  message: "Internal Error",
-                                  error: err,
-                                });
+                              res.status(500).send({
+                                message: "Internal Error",
+                                error: err,
+                              });
                             });
                             return;
                           }
@@ -238,12 +243,10 @@ module.exports = (req, res) => {
                                 if (err) {
                                   console.error(err);
                                   connection.rollback(() => {
-                                    res
-                                      .status(500)
-                                      .send({
-                                        message: "Internal Error",
-                                        error: err,
-                                      });
+                                    res.status(500).send({
+                                      message: "Internal Error",
+                                      error: err,
+                                    });
                                   });
                                   return;
                                 }
@@ -261,12 +264,10 @@ module.exports = (req, res) => {
                               if (err) {
                                 console.error(err);
                                 connection.rollback(() => {
-                                  res
-                                    .status(500)
-                                    .send({
-                                      message: "Internal Error",
-                                      error: err,
-                                    });
+                                  res.status(500).send({
+                                    message: "Internal Error",
+                                    error: err,
+                                  });
                                 });
                                 return;
                               }
@@ -320,12 +321,10 @@ module.exports = (req, res) => {
                           if (err) {
                             console.error(err);
                             connection.rollback(() => {
-                              res
-                                .status(500)
-                                .send({
-                                  message: "Internal Error",
-                                  error: err,
-                                });
+                              res.status(500).send({
+                                message: "Internal Error",
+                                error: err,
+                              });
                             });
                             return;
                           }
