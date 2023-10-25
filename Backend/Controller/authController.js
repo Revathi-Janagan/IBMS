@@ -174,12 +174,20 @@ module.exports = {
               .status(400)
               .send({ message: "User not found", error: err });
           }
-          const user = admin;
-          req.user = {
+         
+          req.admin = {
             role: "admin", // Set the user's role
             id: admin.admin_id, // Include other relevant user information
             isAdmin: true,
           };
+          const selectEmployeeInfoSQL = "SELECT name, profile_pic FROM employees WHERE employee_id = ?";
+            connection.query(selectEmployeeInfoSQL, [admin.employee_id], (err, employeeResult) => {
+              if (err) {
+                return res.status(400).send({ message: "Error fetching employee information", error: err });
+              }
+          
+              const employeeInfo = employeeResult[0];
+
 
           // Check if the user is an admin
           bcrypt.compare(password, admin.password, (err, result) => {
@@ -189,13 +197,15 @@ module.exports = {
                 error: err,
               });
             }
-            if (result) {
+            
+            
+            if (result && employeeInfo) {
               const isSuperadmin = false; // Admin is not a super admin
               const tokenPayload = {
                 userId: admin.admin_id,
                 isSuperadmin,
-                name:user.name,
-                profile_pic :user.profile_pic,
+                name:employeeInfo.name,
+                profile_pic :employeeInfo.profile_pic,
               };
               console.log("token Payload",tokenPayload)
               const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
@@ -207,18 +217,13 @@ module.exports = {
                 AccessToken: token,
               });
             }
-            // return res
-            //   .status(400)
-            //   .send({ message: "Password does not match", error: err });
-            else {
-              // Password does not match
-              const errorMessage = "Password does not match";
-              setErrorDialogOpen(true); // Show the error dialog
-              setErrorMessage(errorMessage); // Set the error message
-            }
+            return res
+              .status(400)
+              .send({ message: "Password does not match", error: err });
+            
           });
         });
-      }
+      })}
     });
   },
 
