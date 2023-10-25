@@ -52,17 +52,22 @@ module.exports = (req, res) => {
         });
         return;
       }
-
       // Update the employees table
       const updateEmployeeSQL = `
-        UPDATE employees
-        SET name=?, profile_pic=?, experience=?,education=?, designation=?, isAdmin=?
-        WHERE employee_id=?
-      `;
+UPDATE employees
+SET
+  name=?,
+  ${req.file ? "profile_pic=?," : ""}
+  experience=?,
+  education=?,
+  designation=?,
+  isAdmin=?
+WHERE employee_id=?
+`;
 
       const employeeValues = [
         name,
-        profile_pic,
+        req.file ? profile_pic : null, // Use the new image or null
         experience,
         education,
         designation,
@@ -83,13 +88,12 @@ module.exports = (req, res) => {
           const updateAdminSQL = `
             UPDATE admin
             SET
-              email=?,
-              username=?,
+              email=?,              
               password=?
             WHERE employee_id=?
           `;
 
-          const adminValues = [email, username, password, employeeId];
+          const adminValues = [email, password, employeeId];
 
           connection.query(updateAdminSQL, adminValues, (err) => {
             if (err) {
@@ -103,6 +107,8 @@ module.exports = (req, res) => {
         }
 
         // Update the personal_information table
+
+        const dobMySQLFormat = new Date(dob).toJSON().slice(0, 10);
         const updatePersonalInfoSQL = `
           UPDATE personal_information
           SET dob=?, marital_status=?, gender=?, place=?
@@ -110,7 +116,7 @@ module.exports = (req, res) => {
         `;
 
         const personalInfoValues = [
-          dob,
+          dobMySQLFormat,
           marital_status,
           gender,
           place,
