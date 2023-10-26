@@ -84,13 +84,15 @@ module.exports = (req, res) => {
       connection.query(
         "UPDATE Customers SET ? WHERE customer_id = ?",
         [updatedCustomer, customerId],
-        (err) => {
+        (err,updateCustomerData) => {
           if (err) {
-            console.error(err);
+            console.error(err);         
             return connection.rollback(() => {
               res.status(500).send({ message: "Internal Error", error: err });
             });
+
           }
+          console.log("Data is",updateCustomerData);
 
           // Update the BusinessInfo table
           connection.query(
@@ -229,7 +231,7 @@ module.exports = (req, res) => {
                                     // Transaction was successful, send a response to the client
                                     res.status(200).send({
                                       message: `Customer ${customer_name} updated successfully`,
-                                      customer_id: customerId,
+                                      customer_id: customerId,                                   
                                       
                                     });
                                   }
