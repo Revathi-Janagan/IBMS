@@ -6,8 +6,8 @@ module.exports = (req, res) => {
     name,
     experience,
     designation,
-    education,
-    isAdmin,
+    education, 
+    isAdmin,  
     dob,
     marital_status,
     gender,
@@ -22,8 +22,15 @@ module.exports = (req, res) => {
     github_url,
     password,
   } = req.body;
-  const profile_pic = req.file ? req.file.filename : null;
 
+  const isAdminValue = isAdmin === 'Yes' ? 1 : 0;
+  let profile_pic; // Declare the profile_pic variable
+
+  if (req.files["profile_pic"] && req.files["profile_pic"][0]) {
+    profile_pic = req.files["profile_pic"][0].filename;
+  } else {
+    profile_pic = null; // Or provide a default value based on your requirements
+  }
   // Begin a transaction
   connection.beginTransaction((err) => {
     if (err) {
@@ -57,7 +64,7 @@ module.exports = (req, res) => {
 UPDATE employees
 SET
   name=?,
-  ${req.file ? "profile_pic=?," : ""}
+  profile_pic =?,
   experience=?,
   education=?,
   designation=?,
@@ -67,11 +74,11 @@ WHERE employee_id=?
 
       const employeeValues = [
         name,
-        req.file ? profile_pic : null, // Use the new image or null
+        profile_pic,
         experience,
         education,
         designation,
-        isAdmin,
+        isAdminValue,
         employeeId,
       ];
 
@@ -199,14 +206,14 @@ WHERE employee_id=?
                   // Insert updated skills for the employee
                   if (Array.isArray(skills) && skills.length > 0) {
                     const insertSkillsSQL = `
-                  INSERT INTO employee_skills (employee_id, skill_id)
+                  INSERT INTO employee_skills (employee_id, employee_skill_id)
                   VALUES (?, ?)
                 `;
 
                     skills.forEach((skillName) => {
                       // Check if the skill already exists
                       const checkSkillSQL = `
-                  SELECT skill_id FROM skills WHERE skill_name = ?
+                  SELECT employee_skill_id FROM employee_skills WHERE skill_name = ?
                 `;
 
                       connection.query(
@@ -232,7 +239,7 @@ WHERE employee_id=?
                           } else {
                             // Skill doesn't exist, insert it into the skills table
                             const insertNewSkillSQL = `
-                          INSERT INTO skills (skill_name)
+                          INSERT INTO employee_skills (skill_name)
                           VALUES (?)
                         `;
 
@@ -284,9 +291,7 @@ WHERE employee_id=?
                   SET experience_description=?
                   WHERE employee_id=?
                 `;
-
                   const experienceValues = [experience_description, employeeId];
-
                   connection.query(
                     updateExperienceSQL,
                     experienceValues,
