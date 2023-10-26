@@ -28,4 +28,8 @@ router.delete(
   CustomerController.DeleteCustomerById
 );
 
+
+
+router.get("/getTotalCustomers",CustomerController.getTotalCustomers)
+
 module.exports = router;

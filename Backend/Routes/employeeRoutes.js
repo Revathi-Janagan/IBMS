@@ -81,4 +81,7 @@ router.delete(
 
 router.get("/getalladmins",EmployeeController.adminsList)
 
+router.get("/getTotalEmployees",EmployeeController.getTotalEmployees)
+
+
 module.exports = router;
