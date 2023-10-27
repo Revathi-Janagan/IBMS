@@ -1,8 +1,9 @@
 const connection = require("../../Helper/db");
+const fs = require("fs");
 const upload = require("../../Config/multerConfig");
 
 module.exports = (req, res) => {
-  const customerId = req.params.customerId; // Assuming the customer ID is provided as a URL parameter
+  const customerId = req.params.customerId;
   const {
     customer_name,
     business_name,
@@ -22,233 +23,237 @@ module.exports = (req, res) => {
     website_address,
   } = req.body;
 
-  // Create objects containing the fields to update in each respective table
-  const updatedCustomer = {
-    customer_name,
-    business_name,
-    business_type,
-    business_category,
-  };
+  // Other fields and variables...
 
-  const updatedBusinessInfo = {
-    business_place,
-    district,
-    language,
-  };
-
-  const updatedContactDetails = {
-    business_number,
-    email,
-  };
-
-  const updatedOwnerDetails = {
-    phone_number,
-  };
-
-  const updatedSocialMediaLinks = {
-    facebook,
-    instagram,
-    youtube,
-    linkedin,
-    twitter,
-  };
-
-  const updatedWebsite = {
-    website_address,
-  };
-
-  // Handle image and document uploads using multer middleware
-  upload.fields([
-    { name: "profile_pic", maxCount: 1 }, // Handle image uploads
-    { name: "document", maxCount: 1 }, // Handle document uploads
-  ])(req, res, (err) => {
+  // Begin a transaction
+  connection.beginTransaction((err) => {
     if (err) {
       console.error(err);
       return res.status(500).send({ message: "Internal Error", error: err });
     }
 
-    // Check if an image was uploaded
-    if (req.files["profile_pic"] && req.files["profile_pic"][0]) {
-      const userImage = req.files["profile_pic"][0].filename;
-      updatedCustomer.profile_pic = userImage;
-    }
+    // Check if the customer exists
+    const checkCustomerSQL = `
+      SELECT * FROM Customers WHERE customer_id = ?
+    `;
 
-    // Begin a transaction
-    connection.beginTransaction((err) => {
+    connection.query(checkCustomerSQL, [customerId], (err, customerResult) => {
       if (err) {
         console.error(err);
-        return res.status(500).send({ message: "Internal Error", error: err });
+        connection.rollback(() => {
+          res.status(500).send({ message: "Internal Error", error: err });
+        });
+        return;
       }
 
-      // Update the customer information in the Customers table
-      connection.query(
-        "UPDATE Customers SET ? WHERE customer_id = ?",
-        [updatedCustomer, customerId],
-        (err,updateCustomerData) => {
-          if (err) {
-            console.error(err);         
-            return connection.rollback(() => {
-              res.status(500).send({ message: "Internal Error", error: err });
-            });
+      if (customerResult.length === 0) {
+        // Customer not found
+        connection.rollback(() => {
+          res.status(404).send({ message: "Customer not found" });
+        });
+        return;
+      }
 
-          }
-          console.log("Data is",updateCustomerData);
+      // Handle profile_pic update if a new profile picture is provided
+      if (req.files["profile_pic"]) {
+        const profilePicFile = req.files["profile_pic"][0];
+        if (profilePicFile) {
+          const profilePicFileName = profilePicFile.filename;
 
-          // Update the BusinessInfo table
+          // Remove the old profile picture from the file system (if applicable)
           connection.query(
-            "UPDATE BusinessInfo SET ? WHERE customer_id = ?",
-            [updatedBusinessInfo, customerId],
-            (err) => {
+            "SELECT profile_pic FROM Customers WHERE customer_id = ?",
+            [customerId],
+            (err, rows) => {
               if (err) {
                 console.error(err);
-                return connection.rollback(() => {
-                  res
-                    .status(500)
-                    .send({ message: "Internal Error", error: err });
+                connection.rollback(() => {
+                  res.status(500).send({ message: "Internal Error", error: err });
                 });
+                return;
               }
 
-              // Update the ContactDetails table
+              if (rows && rows.length > 0) {
+                const oldProfilePicFileName = rows[0].profile_pic;
+
+                if (oldProfilePicFileName) {
+                  fs.unlink(`uploads/images/${oldProfilePicFileName}`, (err) => {
+                    if (err) {
+                      console.error(err);
+                      connection.rollback(() => {
+                        res.status(500).send({
+                          message: "Internal Error",
+                          error: err,
+                        });
+                      });
+                      return;
+                    }
+                  });
+                }
+              }
+
+              // Update the profile_pic in the Customers table
               connection.query(
-                "UPDATE ContactDetails SET ? WHERE customer_id = ?",
-                [updatedContactDetails, customerId],
+                "UPDATE Customers SET profile_pic = ? WHERE customer_id = ?",
+                [profilePicFileName, customerId],
                 (err) => {
                   if (err) {
                     console.error(err);
-                    return connection.rollback(() => {
-                      res
-                        .status(500)
-                        .send({ message: "Internal Error", error: err });
+                    connection.rollback(() => {
+                      res.status(500).send({
+                        message: "Internal Error",
+                        error: err,
+                      });
                     });
+                    return;
                   }
 
-                  // Update the OwnerDetails table
-                  connection.query(
-                    "UPDATE OwnerDetails SET ? WHERE customer_id = ?",
-                    [updatedOwnerDetails, customerId],
-                    (err) => {
-                      if (err) {
-                        console.error(err);
-                        return connection.rollback(() => {
-                          res
-                            .status(500)
-                            .send({ message: "Internal Error", error: err });
-                        });
-                      }
-
-                      // Update the SocialMediaLinks table
-                      connection.query(
-                        "UPDATE SocialMediaLinks SET ? WHERE customer_id = ?",
-                        [updatedSocialMediaLinks, customerId],
-                        (err) => {
-                          if (err) {
-                            console.error(err);
-                            return connection.rollback(() => {
-                              res.status(500).send({
-                                message: "Internal Error",
-                                error: err,
-                              });
-                            });
-                          }
-
-                          // Update the Website table
-                          connection.query(
-                            "UPDATE Website SET ? WHERE customer_id = ?",
-                            [updatedWebsite, customerId],
-                            (err) => {
-                              if (err) {
-                                console.error(err);
-                                return connection.rollback(() => {
-                                  res.status(500).send({
-                                    message: "Internal Error",
-                                    error: err,
-                                  });
-                                });
-                              }
-
-                              if (
-                                req.files["document"] &&
-                                req.files["document"][0]
-                              ) {
-                                const { originalname, buffer } =
-                                  req.files["document"][0];
-
-                                // Create an object to hold the updated file content
-                                const updatedFileContent = {
-                                  file_content: buffer,
-                                };
-
-                                // Perform an UPDATE statement to update the file content
-                                connection.query(
-                                  "UPDATE UploadedFiles SET ? WHERE file_id = ? AND customer_id = ?",
-                                  [updatedFileContent, fileId, customerId],
-                                  (err, result) => {
-                                    if (err) {
-                                      console.error(err);
-                                      return connection.rollback(() => {
-                                        res.status(500).json({
-                                          message: "Internal Error",
-                                          error: err,
-                                        });
-                                      });
-                                    }
-
-                                    // Handle the update success or provide an appropriate response to the client
-                                    res.status(200).json({
-                                      message: "File updated successfully",
-                                      fileId: fileId,
-                                      customerId: customerId,
-                                    });
-
-                                    // Commit the transaction
-                                    connection.commit((err) => {
-                                      if (err) {
-                                        console.error(err);
-                                        res.status(500).send({
-                                          message: "Internal Error",
-                                          error: err,
-                                        });
-                                      } else {
-                                        // Transaction was successful, send a response to the client
-                                        res.status(200).send({
-                                          message: `Customer ${customer_name} updated successfully`,
-                                          customer_id: customerId,
-                                        });
-                                      }
-                                    });
-                                  }
-                                );
-                              } else {
-                                // Commit the transaction when there's no document to update
-                                connection.commit((err) => {
-                                  if (err) {
-                                    console.error(err);
-                                    res.status(500).send({
-                                      message: "Internal Error",
-                                      error: err,
-                                    });
-                                  } else {
-                                    // Transaction was successful, send a response to the client
-                                    res.status(200).send({
-                                      message: `Customer ${customer_name} updated successfully`,
-                                      customer_id: customerId,                                   
-                                      
-                                    });
-                                  }
-                                });
-                              }
-                            }
-                          );
-                        }
-                      );
-                    }
-                  );
+                  // Continue with updating other customer information
+                  updateCustomerInfo();
                 }
               );
             }
           );
+        } else {
+          updateCustomerInfo();
         }
-      );
+      } else {
+        updateCustomerInfo();
+      }
     });
   });
+
+  function updateCustomerInfo() {
+    // Update the BusinessInfo table
+    const updateBusinessInfoSQL = `
+      UPDATE BusinessInfo
+      SET
+        business_place=?,
+        district=?,
+        language=?
+      WHERE customer_id=?
+    `;
+
+    const businessInfoValues = [business_place, district, language, customerId];
+
+    connection.query(updateBusinessInfoSQL, businessInfoValues, (err) => {
+      if (err) {
+        console.error(err);
+        connection.rollback(() => {
+          res.status(500).send({ message: "Internal Error", error: err });
+        });
+        return;
+      }
+
+      // Update the ContactDetails table
+      const updateContactDetailsSQL = `
+        UPDATE ContactDetails
+        SET
+          business_number=?,
+          email=?
+        WHERE customer_id=?
+      `;
+
+      const contactDetailsValues = [business_number, email, customerId];
+
+      connection.query(updateContactDetailsSQL, contactDetailsValues, (err) => {
+        if (err) {
+          console.error(err);
+          connection.rollback(() => {
+            res.status(500).send({ message: "Internal Error", error: err });
+          });
+          return;
+        }
+
+        // Update the OwnerDetails table
+        const updateOwnerDetailsSQL = `
+          UPDATE OwnerDetails
+          SET
+            phone_number=?
+          WHERE customer_id=?
+        `;
+
+        const ownerDetailsValues = [phone_number, customerId];
+
+        connection.query(updateOwnerDetailsSQL, ownerDetailsValues, (err) => {
+          if (err) {
+            console.error(err);
+            connection.rollback(() => {
+              res.status(500).send({ message: "Internal Error", error: err });
+            });
+            return;
+          }
+
+          // Update the SocialMediaLinks table
+          const updateSocialMediaLinksSQL = `
+            UPDATE SocialMediaLinks
+            SET
+              facebook=?,
+              instagram=?,
+              youtube=?,
+              linkedin=?,
+              twitter=?
+            WHERE customer_id=?
+          `;
+
+          const socialMediaLinkValues = [
+            facebook,
+            instagram,
+            youtube,
+            linkedin,
+            twitter,
+            customerId,
+          ];
+
+          connection.query(updateSocialMediaLinksSQL, socialMediaLinkValues, (err) => {
+            if (err) {
+              console.error(err);
+              connection.rollback(() => {
+                res.status(500).send({ message: "Internal Error", error: err });
+              });
+              return;
+            }
+
+            // Update the Website table
+            const updateWebsiteSQL = `
+              UPDATE Website
+              SET
+                website_address=?
+              WHERE customer_id=?
+            `;
+
+            const websiteValues = [website_address, customerId];
+
+            connection.query(updateWebsiteSQL, websiteValues, (err) => {
+              if (err) {
+                console.error(err);
+                connection.rollback(() => {
+                  res.status(500).send({ message: "Internal Error", error: err });
+                });
+                return;
+              }
+
+              // Continue with updating other customer information (the existing code structure)
+              // ...
+
+              // Commit the transaction
+              connection.commit((err) => {
+                if (err) {
+                  console.error(err);
+                  res.status(500).send({ message: "Internal Error" });
+                  return;
+                }
+
+                // Transaction was successful, send a response to the client
+                res.status(200).send({
+                  message: `Customer ${customer_name} updated successfully`,
+                  customer_id: customerId,
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  }
 };
