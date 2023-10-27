@@ -5,6 +5,7 @@ const updateEmployeeById = require("./updateEmployeeById");
 const deleteEmployeeById = require("./deleteEmployeeById");
 const adminsList = require("./adminsList");
 const getTotalEmployees = require("./getTotalEmployees");
+const RecentEmployee = require("./RecentEmployee");
 
 module.exports = {
   createEmployee,
@@ -14,4 +15,5 @@ module.exports = {
   deleteEmployeeById,
   adminsList,
   getTotalEmployees,
+  RecentEmployee,
 };

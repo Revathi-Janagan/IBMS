@@ -31,5 +31,6 @@ router.delete(
 
 
 router.get("/getTotalCustomers",CustomerController.getTotalCustomers)
+router.get("/RecentCustomer",CustomerController.RecentCustomer)
 
 module.exports = router;
