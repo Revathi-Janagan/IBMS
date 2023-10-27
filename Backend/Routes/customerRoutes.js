@@ -33,4 +33,6 @@ router.delete(
 router.get("/getTotalCustomers",CustomerController.getTotalCustomers)
 router.get("/RecentCustomer",CustomerController.RecentCustomer)
 
+router.delete("/deletefiles/:id",CustomerController.Deletefiles)
+
 module.exports = router;
