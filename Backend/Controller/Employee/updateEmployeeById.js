@@ -31,6 +31,7 @@ module.exports = (req, res) => {
   } else {
     profile_pic = null; // Or provide a default value based on your requirements
   }
+ 
   // Begin a transaction
   connection.beginTransaction((err) => {
     if (err) {
