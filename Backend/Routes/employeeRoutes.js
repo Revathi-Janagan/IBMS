@@ -83,5 +83,7 @@ router.get("/getalladmins",EmployeeController.adminsList)
 
 router.get("/getTotalEmployees",EmployeeController.getTotalEmployees)
 
+router.get("/RecentEmployee",EmployeeController.RecentEmployee)
+
 
 module.exports = router;
