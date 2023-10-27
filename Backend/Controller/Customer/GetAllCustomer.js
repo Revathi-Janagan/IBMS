@@ -21,8 +21,7 @@ module.exports = (req, res) => {
   sml.linkedin,
   sml.twitter,
   w.website_address,
-  uf.file_name,
-  uf.file_content,
+  uf.file_name, 
   c.profile_pic
 FROM Customers c
 LEFT JOIN BusinessInfo bi ON c.customer_id = bi.customer_id

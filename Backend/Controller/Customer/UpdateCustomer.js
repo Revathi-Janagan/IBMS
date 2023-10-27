@@ -23,14 +23,21 @@ module.exports = (req, res) => {
     website_address,
   } = req.body;
   let profile_pic;
+  console.log(req.files);
+  let document;
+  if (req.files && req.files["document"] && req.files["document"][9]) {
+    document = req.files["document"][0].filename;
+    console.log("Document is ", document);
+  } else {
+    console.log("Document not provided");
+  }
   if (req.files && req.files["profile_pic"] && req.files["profile_pic"][0]) {
     profile_pic = req.files["profile_pic"][0].filename;
     console.log("profile_pic", profile_pic);
   } else {
     console.error("profile_pic is not provided in the request.");
-    // Handle this case as needed, e.g., return an error response.
   }
-  
+
   // Begin a transaction
   connection.beginTransaction((err) => {
     if (err) {
@@ -235,9 +242,12 @@ module.exports = (req, res) => {
 
                             // Continue with the rest of the customer update logic, including the document file update
                             const newDocumentFile = req.files["document"];
+                            console.log("newDocument", newDocumentFile);
                             if (newDocumentFile) {
                               const newDocumentFileName =
-                                newDocumentFile[0].filename;
+                                newDocumentFile[0].originalname;
+
+                              console.log("After if", newDocumentFileName);
 
                               // Read the content of the new document file using fs module
                               const newDocumentContentBuffer = fs.readFileSync(
@@ -247,14 +257,11 @@ module.exports = (req, res) => {
                               // Update the existing document in the UploadedFiles table
                               const updateUploadedFileSQL = `
                         UPDATE uploadedfiles
-                        SET file_name = ?,
-                        file_content = ?
+                        SET file_name = ?                        
                         WHERE customer_id = ?
                       `;
-
                               const updateUploadedFileValues = [
                                 newDocumentFileName,
-                                newDocumentContentBuffer,
                                 customerId,
                               ];
 

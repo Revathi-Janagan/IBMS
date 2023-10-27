@@ -157,14 +157,15 @@ module.exports = (req, res) => {
                               // Now you can safely access the filename.
                               console.log(documentFileName);
                               const fs = require("fs");
-                              const contentBuffer = fs.readFileSync(documentFile[0].path);
+                              
 
                               // Insert the uploaded document into the UploadedFiles table
                               const uploadedFileValues = {
                                 customer_id: customerId,
                                 file_name: documentFileName,
-                                file_content: contentBuffer,
+                                
                               };
+                              console.log("uploaded File",documentFileName)
                               // You need to read the content of the uploaded file using fs module.
                               connection.query(
                                 "INSERT INTO UploadedFiles SET ?",
