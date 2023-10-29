@@ -23,7 +23,7 @@ router.put(
   CustomerController.UpdateCustomer
 );
 router.delete(
-  "/deletecustomer/:id",
+  "/deletecustomer/:customerId",
   verifyUserRole,
   CustomerController.DeleteCustomerById
 );
@@ -32,5 +32,7 @@ router.delete(
 
 router.get("/getTotalCustomers",CustomerController.getTotalCustomers)
 router.get("/RecentCustomer",CustomerController.RecentCustomer)
+
+router.delete("/deletefiles/:id",CustomerController.Deletefiles)
 
 module.exports = router;

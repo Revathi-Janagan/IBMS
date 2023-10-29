@@ -40,7 +40,7 @@ module.exports = (req, res) => {
 
     // Insert into the Customers table
     connection.query(
-      "INSERT INTO Customers SET ?",
+      "INSERT INTO customers SET ?",
       customerValues,
       (err, result) => {
         if (err) {
@@ -61,7 +61,7 @@ module.exports = (req, res) => {
         };
 
         connection.query(
-          "INSERT INTO BusinessInfo SET ?",
+          "INSERT INTO businessinfo SET ?",
           businessInfoValues,
           (err) => {
             if (err) {
@@ -79,7 +79,7 @@ module.exports = (req, res) => {
             };
 
             connection.query(
-              "INSERT INTO ContactDetails SET ?",
+              "INSERT INTO contactdetails SET ?",
               contactDetailsValues,
               (err) => {
                 if (err) {
@@ -96,7 +96,7 @@ module.exports = (req, res) => {
                 };
 
                 connection.query(
-                  "INSERT INTO OwnerDetails SET ?",
+                  "INSERT INTO ownerdetails SET ?",
                   ownerDetailsValues,
                   (err) => {
                     if (err) {
@@ -117,7 +117,7 @@ module.exports = (req, res) => {
                     };
 
                     connection.query(
-                      "INSERT INTO SocialMediaLinks SET ?",
+                      "INSERT INTO socialmedialinks SET ?",
                       socialMediaLinkValues,
                       (err) => {
                         if (err) {
@@ -137,7 +137,7 @@ module.exports = (req, res) => {
                         };
 
                         connection.query(
-                          "INSERT INTO Website SET ?",
+                          "INSERT INTO website SET ?",
                           websiteValues,
                           (err) => {
                             if (err) {
@@ -153,7 +153,7 @@ module.exports = (req, res) => {
                             // Check if a document was uploaded
                             const documentFile = req.files["document"];
                             if (documentFile) {
-                              const documentFileName = documentFile[0].filename;
+                              const documentFileName = documentFile[0].originalname;
                               // Now you can safely access the filename.
                               console.log(documentFileName);
                               const fs = require("fs");
@@ -168,7 +168,7 @@ module.exports = (req, res) => {
                               console.log("uploaded File",documentFileName)
                               // You need to read the content of the uploaded file using fs module.
                               connection.query(
-                                "INSERT INTO UploadedFiles SET ?",
+                                "INSERT INTO uploadedfiles SET ?",
                                 uploadedFileValues,
                                 (err) => {
                                   if (err) {

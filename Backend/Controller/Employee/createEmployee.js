@@ -47,97 +47,76 @@ module.exports = (req, res) => {
       isAdmin: isAdmin === "Yes" ? 1 : 0,
     };
 
-    connection.query("INSERT INTO employees SET ?", employeeValues, (err, result) => {
-      if (err) {
-        console.error(err);
-        return connection.rollback(() => {
-          res.status(500).send({ message: "Internal Error", error: err });
-        });
-      }
-      const employeeId = result.insertId;
+    connection.query(
+      "INSERT INTO employees SET ?",
+      employeeValues,
+      (err, result) => {
+        if (err) {
+          console.error(err);
+          return connection.rollback(() => {
+            res.status(500).send({ message: "Internal Error", error: err });
+          });
+        }
+        const employeeId = result.insertId;
 
-      if (isAdmin === "Yes") {
-        bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
-          if (err) {
-            console.error(err);
-            return connection.rollback(() => {
-              res.status(500).send({ message: "Internal Error", error: err });
-            });
-          }
-
-          const adminValues = {
-            employee_id: employeeId,
-            email,
-            password: hashedPassword,            
-          };
-
-          connection.query("INSERT INTO admin SET ?", adminValues, (err) => {
+        if (isAdmin === "Yes") {
+          bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
             if (err) {
               console.error(err);
               return connection.rollback(() => {
                 res.status(500).send({ message: "Internal Error", error: err });
               });
             }
-            sendAdminRegisterEmail(email, password);
-          });
-        });
-      }
 
-      const dob = req.body.dob; // Assuming 'dob' is provided in the request body
+            const adminValues = {
+              employee_id: employeeId,
+              email,
+              password: hashedPassword,
+            };
 
-      if (!dob) {
-        return res.status(400).send({ message: "Date of birth is required" });
-      }
-      
-      const dobDate = new Date(dob);
-      
-      if (isNaN(dobDate)) {
-        return res.status(400).send({ message: "Invalid date of birth" });
-      }
-      
-      // If the code reaches here, 'dobDate' is a valid Date object
-      const formattedDOB = dobDate.toISOString().slice(0, 10);
-      
-      // Continue processing with 'formattedDOB'
-      
-      const personalInfoValues = {
-        employee_id: employeeId,
-        dob: formattedDOB,
-        marital_status,
-        gender,
-        place,
-      };
-
-      connection.query("INSERT INTO personal_information SET ?", personalInfoValues, (err) => {
-        if (err) {
-          console.error(err);
-          return connection.rollback(() => {
-            res.status(500).send({ message: "Internal Error" });
+            connection.query("INSERT INTO admin SET ?", adminValues, (err) => {
+              if (err) {
+                console.error(err);
+                return connection.rollback(() => {
+                  res
+                    .status(500)
+                    .send({ message: "Internal Error", error: err });
+                });
+              }
+              sendAdminRegisterEmail(email, password);
+            });
           });
         }
 
-        const contactDetailsValues = {
+        const dob = req.body.dob; // Assuming 'dob' is provided in the request body
+
+        if (!dob) {
+          return res.status(400).send({ message: "Date of birth is required" });
+        }
+
+        const dobDate = new Date(dob);
+
+        if (isNaN(dobDate)) {
+          return res.status(400).send({ message: "Invalid date of birth" });
+        }
+
+        // If the code reaches here, 'dobDate' is a valid Date object
+        const formattedDOB = dobDate.toISOString().slice(0, 10);
+
+        // Continue processing with 'formattedDOB'
+
+        const personalInfoValues = {
           employee_id: employeeId,
-          mobile_number,
-          email,
+          dob: formattedDOB,
+          marital_status,
+          gender,
+          place,
         };
 
-        connection.query("INSERT INTO contact_details SET ?", contactDetailsValues, (err) => {
-          if (err) {
-            console.error(err);
-            return connection.rollback(() => {
-              res.status(500).send({ message: "Internal Error" });
-            });
-          }
-
-          const physicallyChallengedInt = physically_challenged.toLowerCase() === "yes" ? 1 : 0;
-          const extraInfoValues = {
-            employee_id: employeeId,
-            alternative_phone_number,
-            physically_challenged: physicallyChallengedInt,
-          };
-
-          connection.query("INSERT INTO extra_information SET ?", extraInfoValues, (err) => {
+        connection.query(
+          "INSERT INTO personal_information SET ?",
+          personalInfoValues,
+          (err) => {
             if (err) {
               console.error(err);
               return connection.rollback(() => {
@@ -145,34 +124,76 @@ module.exports = (req, res) => {
               });
             }
 
-            let skillsArray;
-            if (!Array.isArray(skills)) {
-              // Handle the case where skills is not an array, e.g., by converting it to an array.
-              skillsArray = [skills]; // Assuming skills is a single skill, convert it to an array.
-            } else {
-              skillsArray = skills; // Skills is already an array, use it as is.
-            }
-            
-            insertSkills(employeeId, skillsArray, () => {
-              insertExperienceAndProjects(employeeId, () => {
-                connection.commit((err) => {
-                  if (err) {
-                    console.error(err);
-                    res.status(500).send({ message: "Internal Error", error: err });
-                  } else {
-                    res.status(200).send({
-                      message: `Employee ${name} created successfully`,
-                      employee_id: employeeId,
-                      skills: skillsArray,
+            const contactDetailsValues = {
+              employee_id: employeeId,
+              mobile_number,
+              email,
+            };
+
+            connection.query(
+              "INSERT INTO contact_details SET ?",
+              contactDetailsValues,
+              (err) => {
+                if (err) {
+                  console.error(err);
+                  return connection.rollback(() => {
+                    res.status(500).send({ message: "Internal Error" });
+                  });
+                }
+
+                const physicallyChallengedInt =
+                  physically_challenged.toLowerCase() === "yes" ? 1 : 0;
+                const extraInfoValues = {
+                  employee_id: employeeId,
+                  alternative_phone_number,
+                  physically_challenged: physicallyChallengedInt,
+                };
+
+                connection.query(
+                  "INSERT INTO extra_information SET ?",
+                  extraInfoValues,
+                  (err) => {
+                    if (err) {
+                      console.error(err);
+                      return connection.rollback(() => {
+                        res.status(500).send({ message: "Internal Error" });
+                      });
+                    }
+
+                    let skillsArray;
+                    if (!Array.isArray(skills)) {
+                      // Handle the case where skills is not an array, e.g., by converting it to an array.
+                      skillsArray = [skills]; // Assuming skills is a single skill, convert it to an array.
+                    } else {
+                      skillsArray = skills; // Skills is already an array, use it as is.
+                    }
+
+                    insertSkills(employeeId, skillsArray, () => {
+                      insertExperienceAndProjects(employeeId, () => {
+                        connection.commit((err) => {
+                          if (err) {
+                            console.error(err);
+                            res
+                              .status(500)
+                              .send({ message: "Internal Error", error: err });
+                          } else {
+                            res.status(200).send({
+                              message: `Employee ${name} created successfully`,
+                              employee_id: employeeId,
+                              skills: skillsArray,
+                            });
+                          }
+                        });
+                      });
                     });
                   }
-                });
-              });
-            });
-          });
-        });
-      });
-    });
+                );
+              }
+            );
+          }
+        );
+      }
+    );
   });
 
   function insertSkills(employeeId, skills, callback) {
@@ -184,19 +205,23 @@ module.exports = (req, res) => {
         skill_name: skillName,
       };
 
-      connection.query("INSERT INTO employee_skills SET ?", skillValues, (err) => {
-        if (err) {
-          console.error(err);
-          connection.rollback(() => {
-            res.status(500).send({ message: "Internal Error" });
-          });
-        } else {
-          insertedCount++;
-          if (insertedCount === skillInsertCount) {
-            callback();
+      connection.query(
+        "INSERT INTO employee_skills SET ?",
+        skillValues,
+        (err) => {
+          if (err) {
+            console.error(err);
+            connection.rollback(() => {
+              res.status(500).send({ message: "Internal Error" });
+            });
+          } else {
+            insertedCount++;
+            if (insertedCount === skillInsertCount) {
+              callback();
+            }
           }
         }
-      });
+      );
     }
   }
 
@@ -206,21 +231,10 @@ module.exports = (req, res) => {
       experience_description,
     };
 
-    connection.query("INSERT INTO experience SET ?", experienceValues, (err) => {
-      if (err) {
-        console.error(err);
-        connection.rollback(() => {
-          res.status(500).send({ message: "Internal Error" });
-        });
-      }
-
-      const projectsValues = {
-        employee_id: employeeId,
-        portfolio_url,
-        github_url,
-      };
-
-      connection.query("INSERT INTO projects SET ?", projectsValues, (err) => {
+    connection.query(
+      "INSERT INTO experience SET ?",
+      experienceValues,
+      (err) => {
         if (err) {
           console.error(err);
           connection.rollback(() => {
@@ -228,8 +242,27 @@ module.exports = (req, res) => {
           });
         }
 
-        callback();
-      });
-    });
+        const projectsValues = {
+          employee_id: employeeId,
+          portfolio_url,
+          github_url,
+        };
+
+        connection.query(
+          "INSERT INTO projects SET ?",
+          projectsValues,
+          (err) => {
+            if (err) {
+              console.error(err);
+              connection.rollback(() => {
+                res.status(500).send({ message: "Internal Error" });
+              });
+            }
+
+            callback();
+          }
+        );
+      }
+    );
   }
 };

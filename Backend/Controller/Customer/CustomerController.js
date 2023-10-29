@@ -5,6 +5,7 @@ const UpdateCustomer = require("./UpdateCustomer");
 const DeleteCustomerById = require("./DeleteCustomerById");
 const getTotalCustomers = require("./getTotalCustomers");
 const RecentCustomer = require("./RecentCustomer");
+const Deletefiles = require("./deleteFiles")
 
 module.exports = {
     CreateCustomer,
@@ -14,6 +15,7 @@ module.exports = {
     DeleteCustomerById,
     getTotalCustomers,
     RecentCustomer,
+    Deletefiles,
 }
 
  
