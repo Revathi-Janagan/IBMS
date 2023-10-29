@@ -50,7 +50,7 @@ const verifyUserRole = (req, res, next) => {
     } else if (!decoded.isSuperadmin) {
       // User is an admin, but only allow creating non-admin employees
       console.log("isAdmin in request body:", req.body.isAdmin);
-      if (!req.body.isAdmin) {
+      if (req.body.isAdmin == 0 || req.body.isAdmin === "No") {
         // isAdmin is false in the request, allow the action
         next();
       } else {

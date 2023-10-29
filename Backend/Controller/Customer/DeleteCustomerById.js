@@ -12,15 +12,15 @@ module.exports = (req, res) => {
 
     // Delete the customer and related data from all tables using cascading delete
     connection.query(
-      "DELETE Customers, BusinessInfo, ContactDetails, OwnerDetails, SocialMediaLinks, Website, FileUploads " +
-      "FROM Customers " +
-      "LEFT JOIN BusinessInfo ON Customers.customer_id = BusinessInfo.customer_id " +
-      "LEFT JOIN ContactDetails ON Customers.customer_id = ContactDetails.customer_id " +
-      "LEFT JOIN OwnerDetails ON Customers.customer_id = OwnerDetails.customer_id " +
-      "LEFT JOIN SocialMediaLinks ON Customers.customer_id = SocialMediaLinks.customer_id " +
-      "LEFT JOIN Website ON Customers.customer_id = Website.customer_id " +
-      "LEFT JOIN FileUploads ON Customers.customer_id = FileUploads.customer_id " +
-      "WHERE Customers.customer_id = ?",
+      "DELETE customers, businessinfo, contactdetails, ownerdetails, socialmedialinks, website, uploadedfiles " +
+      "FROM customers " +
+      "LEFT JOIN businessinfo ON customers.customer_id = businessinfo.customer_id " +
+      "LEFT JOIN contactdetails ON customers.customer_id = contactdetails.customer_id " +
+      "LEFT JOIN ownerdetails ON customers.customer_id = ownerdetails.customer_id " +
+      "LEFT JOIN socialmedialinks ON customers.customer_id = socialmedialinks.customer_id " +
+      "LEFT JOIN website ON customers.customer_id = website.customer_id " +
+      "LEFT JOIN uploadedfiles ON customers.customer_id = uploadedfiles.customer_id " +
+      "WHERE customers.customer_id = ?",
       [customerId],
       (err, result) => {
         if (err) {
@@ -34,11 +34,13 @@ module.exports = (req, res) => {
         connection.commit((err) => {
           if (err) {
             console.error(err);
-            res.status(500).send({ message: "Internal Error", error: err });
-          } else {
-            // Transaction was successful, send a response to the client
-            res.status(200).send({ message: "Customer profile deleted successfully" });
+            return connection.rollback(() => {
+              res.status(500).send({ message: "Internal Error", error: err });
+            });
           }
+
+          // Transaction was successful, send a response to the client
+          res.status(200).send({ message: `Customer profile deleted successfully ${customerId}` });
         });
       }
     );

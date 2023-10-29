@@ -3,6 +3,7 @@ const fs = require("fs");
 
 module.exports = (req, res) => {
   const customerId = req.params.id;
+  const fileId = req.params.id;
   const {
     customer_name,
     business_name,
@@ -246,6 +247,7 @@ module.exports = (req, res) => {
                                 res.status(200).send({
                                   message: `Customer ${customer_name} updated successfully`,
                                   customer_id: customerId,
+                                  file_id:fileId,
                                 });
                               });
                             }

@@ -23,7 +23,7 @@ router.put(
   CustomerController.UpdateCustomer
 );
 router.delete(
-  "/deletecustomer/:id",
+  "/deletecustomer/:customerId",
   verifyUserRole,
   CustomerController.DeleteCustomerById
 );
