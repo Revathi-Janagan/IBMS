@@ -24,6 +24,7 @@ module.exports = (req, res) => {
   } = req.body;
 
   const isAdminValue = isAdmin === 'Yes' ? 1 : 0;
+  
   let profile_pic; // Declare the profile_pic variable
 
   if (req.files["profile_pic"] && req.files["profile_pic"][0]) {
@@ -164,6 +165,7 @@ WHERE employee_id=?
               }
 
               // Update the extra_information table
+              const physicallyChallengedInt = physically_challenged.toLowerCase() === "yes" ? 1 : 0;
               const updateExtraInfoSQL = `
               UPDATE extra_information
               SET alternative_phone_number=?, physically_challenged=?
@@ -172,7 +174,7 @@ WHERE employee_id=?
 
               const extraInfoValues = [
                 alternative_phone_number,
-                physically_challenged,
+                physicallyChallengedInt,
                 employeeId,
               ];
 
