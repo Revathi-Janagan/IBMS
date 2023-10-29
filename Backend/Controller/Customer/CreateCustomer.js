@@ -153,7 +153,7 @@ module.exports = (req, res) => {
                             // Check if a document was uploaded
                             const documentFile = req.files["document"];
                             if (documentFile) {
-                              const documentFileName = documentFile[0].filename;
+                              const documentFileName = documentFile[0].originalname;
                               // Now you can safely access the filename.
                               console.log(documentFileName);
                               const fs = require("fs");

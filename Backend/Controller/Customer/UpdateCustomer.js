@@ -21,18 +21,17 @@ module.exports = (req, res) => {
     linkedin,
     twitter,
     website_address,
+    profile_pic,
   } = req.body;
 
   // Handle file uploads
-  let profile_pic;
+ 
   let document;
   if (req.files) {
     if (req.files["document"] && req.files["document"][0]) {
       document = req.files["document"][0].filename;
     }
-    if (req.files["profile_pic"] && req.files["profile_pic"][0]) {
-      profile_pic = req.files["profile_pic"][0].filename;
-    }
+   
   }
 
   connection.beginTransaction((err) => {
