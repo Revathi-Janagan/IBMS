@@ -28,6 +28,7 @@ module.exports = {
     const userImage = req.file.filename;
 
     // Check if there is already a super admin
+    app.get('/checkSuperAdmin', (req, res) => {
     const checkSuperAdminSql = "SELECT * FROM super_admin";
     connection.query(checkSuperAdminSql, (err, result) => {
       if (err) {
@@ -61,6 +62,7 @@ module.exports = {
         }
       });
     });
+  });
   },
   deleteSuperAdmin: (req, res) => {
     const { email } = req.body;
