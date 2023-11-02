@@ -4,7 +4,6 @@ module.exports = (req, res) => {
   const employeeId = req.params.id;
   const {
     name,
-    profile_pic,
     experience,
     designation,
     education,
@@ -21,9 +20,16 @@ module.exports = (req, res) => {
     experience_description,
     portfolio_url,
     github_url,
-    password,
+    password,   
   } = req.body;
   console.log("Request body", req.body);
+  let profile_pic
+  if (req.files["profile_pic"] && req.files["profile_pic"][0]) {
+    profile_pic = req.files["profile_pic"][0].filename;
+  }else{
+    // If no new image is selected, use the existing image (dynamically set it)
+    profile_pic = req.body.profile_pic; // Assuming you include this in the request
+  }
 
   const isAdminValue = isAdmin === "Yes" ? 1 : 0;
 
@@ -182,7 +188,7 @@ WHERE employee_id=?
                       .send({ message: "Internal Error", error: err });
                   });
                   return;
-                }              
+                }
                 // Fetch existing skills for the employee
                 const fetchExistingSkillsSQL = `
         SELECT skill_name FROM employee_skills WHERE employee_id = ?
@@ -231,12 +237,10 @@ WHERE employee_id=?
                           if (err) {
                             console.error(err);
                             connection.rollback(() => {
-                              res
-                                .status(500)
-                                .send({
-                                  message: "Internal Error",
-                                  error: err,
-                                });
+                              res.status(500).send({
+                                message: "Internal Error",
+                                error: err,
+                              });
                             });
                             return;
                           }
@@ -263,12 +267,10 @@ WHERE employee_id=?
                           if (err) {
                             console.error(err);
                             connection.rollback(() => {
-                              res
-                                .status(500)
-                                .send({
-                                  message: "Internal Error",
-                                  error: err,
-                                });
+                              res.status(500).send({
+                                message: "Internal Error",
+                                error: err,
+                              });
                             });
                             return;
                           }

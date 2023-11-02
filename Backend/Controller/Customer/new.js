@@ -3,7 +3,7 @@ const fs = require("fs");
 
 module.exports = (req, res) => {
   const customerId = req.params.id;
-  const fileId = req.params.id;
+  const fileId = req.params.file_id;
   const {
     customer_name,
     business_name,

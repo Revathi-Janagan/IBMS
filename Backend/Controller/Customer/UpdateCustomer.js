@@ -21,17 +21,22 @@ module.exports = (req, res) => {
     linkedin,
     twitter,
     website_address,
-    profile_pic,
   } = req.body;
 
   // Handle file uploads
- 
+  let profile_pic
+  if (req.files["profile_pic"] && req.files["profile_pic"][0]) {
+    profile_pic = req.files["profile_pic"][0].filename;
+  }else{
+    // If no new image is selected, use the existing image (dynamically set it)
+    profile_pic = req.body.profile_pic; // Assuming you include this in the request
+  }
+
   let document;
   if (req.files) {
     if (req.files["document"] && req.files["document"][0]) {
       document = req.files["document"][0].filename;
     }
-   
   }
 
   connection.beginTransaction((err) => {
@@ -246,7 +251,7 @@ module.exports = (req, res) => {
                                 res.status(200).send({
                                   message: `Customer ${customer_name} updated successfully`,
                                   customer_id: customerId,
-                                  file_id:fileId,
+                                  file_id: fileId,
                                 });
                               });
                             }
