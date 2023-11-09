@@ -28,12 +28,12 @@ module.exports = {
     const userImage = req.file.filename;
 
     // Check if there is already a super admin
-    app.get('/checkSuperAdmin', (req, res) => {
+   
     const checkSuperAdminSql = "SELECT * FROM super_admin";
     connection.query(checkSuperAdminSql, (err, result) => {
       if (err) {
         console.error(err);
-        return res.status(500).send({ message: "Internal Error" });
+        return res.status(500).send({ message: "Internal Error",error:err });
       }
 
      // If there is already a super admin, return an error
@@ -62,7 +62,7 @@ module.exports = {
         }
       });
     });
-  });
+ ;
   },
   deleteSuperAdmin: (req, res) => {
     const { email } = req.body;
