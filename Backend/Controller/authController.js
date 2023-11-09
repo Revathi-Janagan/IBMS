@@ -57,7 +57,7 @@ module.exports = {
           sendRegisterEmail(email);
           console.log(email);
           res.status(200).send({
-            message: `Thank You ${name.split(" ")[0]} for registering with us`,
+            message: `Thank You ${name.split(" ")[0]} for registering with us`, result:result
           });
         }
       });
