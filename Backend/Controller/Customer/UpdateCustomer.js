@@ -24,10 +24,10 @@ module.exports = (req, res) => {
   } = req.body;
 
   // Handle file uploads
-  let profile_pic
+  let profile_pic;
   if (req.files["profile_pic"] && req.files["profile_pic"][0]) {
     profile_pic = req.files["profile_pic"][0].filename;
-  }else{
+  } else {
     // If no new image is selected, use the existing image (dynamically set it)
     profile_pic = req.body.profile_pic; // Assuming you include this in the request
   }
@@ -36,8 +36,11 @@ module.exports = (req, res) => {
   if (req.files) {
     if (req.files["document"] && req.files["document"][0]) {
       document = req.files["document"][0].filename;
+    } else {
+      document = req.body.document;
     }
   }
+  console.log("Document is",document);
 
   connection.beginTransaction((err) => {
     if (err) {
@@ -213,17 +216,16 @@ module.exports = (req, res) => {
 
                         // Handle the document upload
                         if (document) {
-                          // Update or insert the new document based on customer_id
-                          const updateDocumentSQL = `INSERT INTO uploadedfiles (customer_id, file_name)
-                                                     VALUES (?, ?)
-                                                    ON DUPLICATE KEY UPDATE file_name = ?;
-                                                     `;
+                          // Update or insert the new document based on the 'customer_id'
+                          const updateDocumentSQL = `
+                      UPDATE uploadedfiles
+                      SET
+                      file_name = ?
+                      WHERE customer_id = ?
+                    `;
+                          const updateDocumentValues = [document.originalname,customerId];
 
-                          const updateDocumentValues = [
-                            customerId,
-                            document,
-                            document,
-                          ];
+                          // Execute the SQL query to update the document in the database
                           connection.query(
                             updateDocumentSQL,
                             updateDocumentValues,
