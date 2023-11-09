@@ -50,9 +50,9 @@ module.exports = {
       connection.query(insertSQL, values, (err, result) => {
         if (err) {
           console.error(err);
-          return res.status(500).send({ message: "Internal Error" });
+          return res.status(500).send({ message: "Internal Error",error:err });
         } else if (result.affectedRows === 0) {
-          return res.status(500).send({ message: "No Rows Affected" });
+          return res.status(500).send({ message: "No Rows Affected",error:err });
         } else {
           sendRegisterEmail(email);
           console.log(email);
