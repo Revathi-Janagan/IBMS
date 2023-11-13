@@ -28,15 +28,14 @@ module.exports = {
     const userImage = req.file.filename;
 
     // Check if there is already a super admin
-   
     const checkSuperAdminSql = "SELECT * FROM super_admin";
     connection.query(checkSuperAdminSql, (err, result) => {
       if (err) {
         console.error(err);
-        return res.status(500).send({ message: "Internal Error",error:err });
+        return res.status(500).send({ message: "Internal Error", error: err });
       }
 
-     // If there is already a super admin, return an error
+      // If there is already a super admin, return an error
       if (result.length > 0) {
         return res.status(409).send({ message: "Super Admin already exists" });
       }
@@ -50,19 +49,23 @@ module.exports = {
       connection.query(insertSQL, values, (err, result) => {
         if (err) {
           console.error(err);
-          return res.status(500).send({ message: "Internal Error",error:err });
+          return res
+            .status(500)
+            .send({ message: "Internal Error", error: err });
         } else if (result.affectedRows === 0) {
-          return res.status(500).send({ message: "No Rows Affected",error:err });
+          return res
+            .status(500)
+            .send({ message: "No Rows Affected", error: err });
         } else {
           sendRegisterEmail(email);
           console.log(email);
           res.status(200).send({
-            message: `Thank You ${name.split(" ")[0]} for registering with us`, result:result
+            message: `Thank You ${name.split(" ")[0]} for registering with us`,
+            result: result,
           });
         }
       });
     });
- ;
   },
   deleteSuperAdmin: (req, res) => {
     const { email } = req.body;
@@ -131,7 +134,6 @@ module.exports = {
           isAdmin: false,
         };
 
-        
         if (!user) {
           return res.status(400).send({ message: "User not Found" });
         }
@@ -146,10 +148,9 @@ module.exports = {
             const tokenPayload = {
               userId: superAdmin.super_admin_id,
               isSuperadmin,
-              name:user.name,
-              profile_pic :user.profile_pic,
-
-            };           
+              name: user.name,
+              profile_pic: user.profile_pic,
+            };
             console.log("Token Payload At Login", tokenPayload);
             const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
               expiresIn: "12h",
@@ -176,56 +177,60 @@ module.exports = {
               .status(400)
               .send({ message: "User not found", error: err });
           }
-         
+
           req.admin = {
             role: "admin", // Set the user's role
             id: admin.admin_id, // Include other relevant user information
             isAdmin: true,
           };
-          const selectEmployeeInfoSQL = "SELECT name, profile_pic FROM employees WHERE employee_id = ?";
-            connection.query(selectEmployeeInfoSQL, [admin.employee_id], (err, employeeResult) => {
+          const selectEmployeeInfoSQL =
+            "SELECT name, profile_pic FROM employees WHERE employee_id = ?";
+          connection.query(
+            selectEmployeeInfoSQL,
+            [admin.employee_id],
+            (err, employeeResult) => {
               if (err) {
-                return res.status(400).send({ message: "Error fetching employee information", error: err });
+                return res.status(400).send({
+                  message: "Error fetching employee information",
+                  error: err,
+                });
               }
-          
+
               const employeeInfo = employeeResult[0];
-
-
-          // Check if the user is an admin
-          bcrypt.compare(password, admin.password, (err, result) => {
-            if (err) {
-              return res.status(400).send({
-                message: "Error while comparing passwords",
-                error: err,
+              // Check if the user is an admin
+              bcrypt.compare(password, admin.password, (err, result) => {
+                if (err) {
+                  return res.status(400).send({
+                    message: "Error while comparing passwords",
+                    error: err,
+                  });
+                }
+                if (result && employeeInfo) {
+                  const isSuperadmin = false; // Admin is not a super admin
+                  const tokenPayload = {
+                    userId: admin.admin_id,
+                    isSuperadmin,
+                    name: employeeInfo.name,
+                    profile_pic: employeeInfo.profile_pic,
+                  };
+                  console.log("token Payload", tokenPayload);
+                  const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
+                    expiresIn: "12h",
+                  });
+                  return res.status(200).json({
+                    message: "Login Success",
+                    user: admin,
+                    AccessToken: token,
+                  });
+                }
+                return res
+                  .status(400)
+                  .send({ message: "Password does not match", error: err });
               });
             }
-            
-            
-            if (result && employeeInfo) {
-              const isSuperadmin = false; // Admin is not a super admin
-              const tokenPayload = {
-                userId: admin.admin_id,
-                isSuperadmin,
-                name:employeeInfo.name,
-                profile_pic :employeeInfo.profile_pic,
-              };
-              console.log("token Payload",tokenPayload)
-              const token = jwt.sign(tokenPayload, ACCESS_TOKEN, {
-                expiresIn: "12h",
-              });
-              return res.status(200).json({
-                message: "Login Success",
-                user: admin,
-                AccessToken: token,
-              });
-            }
-            return res
-              .status(400)
-              .send({ message: "Password does not match", error: err });
-            
-          });
+          );
         });
-      })}
+      }
     });
   },
 
